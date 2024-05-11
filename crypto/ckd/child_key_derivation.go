@@ -14,10 +14,10 @@ import (
 	"hash"
 	"math/big"
 
+	"github.com/ModChain/base58"
 	"github.com/ModChain/secp256k1"
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/crypto"
-	"github.com/btcsuite/btcutil/base58"
 	"golang.org/x/crypto/ripemd160"
 )
 
@@ -75,14 +75,17 @@ func (k *ExtendedKey) String() string {
 
 	checkSum := doubleHashB(serializedBytes)[:4]
 	serializedBytes = append(serializedBytes, checkSum...)
-	return base58.Encode(serializedBytes)
+	return base58.Bitcoin.Encode(serializedBytes)
 }
 
 // NewExtendedKeyFromString returns a new extended key from a base58-encoded extended key
 func NewExtendedKeyFromString(key string, curve elliptic.Curve) (*ExtendedKey, error) {
 	// version(4) || depth(1) || parentFP (4) || childinde(4) || chaincode (32) || key(33) || checksum(4)
 
-	decoded := base58.Decode(key)
+	decoded, err := base58.Bitcoin.Decode(key)
+	if err != nil {
+		return nil, err
+	}
 	if len(decoded) != serializedKeyLen+4 {
 		return nil, errors.New("invalid extended key")
 	}

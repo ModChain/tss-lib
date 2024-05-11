@@ -1,5 +1,7 @@
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/ModChain/base58 v1.0.0 h1:QFm7L896+3n6ie8++cXRJM7S2k2GW/QohrfoxJExHKU=
+github.com/ModChain/base58 v1.0.0/go.mod h1:/FvdI5MHtcByk2Hn/3F1TuaqLjZ3R9MvDS1Z7fd6Qyc=
 github.com/ModChain/edwards25519 v1.0.0 h1:Geww/chivFY6E/mZgA4chVf4HWvUgJ1LdRZ0v2d25Eo=
 github.com/ModChain/edwards25519 v1.0.0/go.mod h1:kjiZ1iVWnsHVMHeIgWFu26ik6/jPlE+c9MrfO5wbLm4=
 github.com/ModChain/secp256k1 v0.1.0 h1:dnPBI/FxgtXL0AMI57iCob6EaknV2S8P1jWI1l3G4ns=

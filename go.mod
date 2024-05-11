@@ -3,9 +3,10 @@ module github.com/ModChain/tss-lib/v2
 go 1.22.2
 
 require (
+	github.com/ModChain/base58 v1.0.0
 	github.com/ModChain/edwards25519 v1.0.0
+	github.com/ModChain/secp256k1 v0.1.0
 	github.com/btcsuite/btcd v0.23.4
-	github.com/btcsuite/btcutil v1.0.2
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ipfs/go-log v1.0.5
 	github.com/otiai10/primes v0.0.0-20210501021515-f1b2be525a11
@@ -16,7 +17,6 @@ require (
 )
 
 require (
-	github.com/ModChain/secp256k1 v0.1.0 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
