@@ -53,7 +53,7 @@ func TestE2EConcurrent(t *testing.T) {
 	p2pCtx := tss.NewPeerContext(signPIDs)
 	parties := make([]*LocalParty, 0, len(signPIDs))
 
-	errCh := make(chan *tss.Error, len(signPIDs))
+	errCh := make(chan error, len(signPIDs))
 	outCh := make(chan tss.Message, len(signPIDs))
 	endCh := make(chan *common.SignatureData, len(signPIDs))
 
@@ -159,7 +159,7 @@ func TestE2EConcurrentWithLeadingZeroInMSG(t *testing.T) {
 	p2pCtx := tss.NewPeerContext(signPIDs)
 	parties := make([]*LocalParty, 0, len(signPIDs))
 
-	errCh := make(chan *tss.Error, len(signPIDs))
+	errCh := make(chan error, len(signPIDs))
 	outCh := make(chan tss.Message, len(signPIDs))
 	endCh := make(chan *common.SignatureData, len(signPIDs))
 

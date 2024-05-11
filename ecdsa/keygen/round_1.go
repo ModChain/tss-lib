@@ -28,7 +28,7 @@ func newRound1(params *tss.Parameters, save *LocalPartySaveData, temp *localTemp
 	}
 }
 
-func (round *round1) Start() *tss.Error {
+func (round *round1) Start() error {
 	if round.started {
 		return round.WrapError(errors.New("round already started"))
 	}
@@ -138,7 +138,7 @@ func (round *round1) CanAccept(msg tss.ParsedMessage) bool {
 	return false
 }
 
-func (round *round1) Update() (bool, *tss.Error) {
+func (round *round1) Update() (bool, error) {
 	ret := true
 	for j, msg := range round.temp.kgRound1Messages {
 		if round.ok[j] {

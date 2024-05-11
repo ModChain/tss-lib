@@ -23,7 +23,7 @@ const (
 	paillierBitsLen = 2048
 )
 
-func (round *round2) Start() *tss.Error {
+func (round *round2) Start() error {
 	if round.started {
 		return round.WrapError(errors.New("round already started"))
 	}
@@ -163,7 +163,7 @@ func (round *round2) CanAccept(msg tss.ParsedMessage) bool {
 	return false
 }
 
-func (round *round2) Update() (bool, *tss.Error) {
+func (round *round2) Update() (bool, error) {
 	// guard - VERIFY de-commit for all Pj
 	ret := true
 	for j, msg := range round.temp.kgRound2Message1s {

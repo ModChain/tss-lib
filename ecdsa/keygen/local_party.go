@@ -99,15 +99,15 @@ func (p *LocalParty) FirstRound() tss.Round {
 	return newRound1(p.params, &p.data, &p.temp, p.out, p.end)
 }
 
-func (p *LocalParty) Start() *tss.Error {
+func (p *LocalParty) Start() error {
 	return tss.BaseStart(p, TaskName)
 }
 
-func (p *LocalParty) Update(msg tss.ParsedMessage) (ok bool, err *tss.Error) {
+func (p *LocalParty) Update(msg tss.ParsedMessage) (ok bool, err error) {
 	return tss.BaseUpdate(p, msg, TaskName)
 }
 
-func (p *LocalParty) UpdateFromBytes(wireBytes []byte, from *tss.PartyID, isBroadcast bool) (bool, *tss.Error) {
+func (p *LocalParty) UpdateFromBytes(wireBytes []byte, from *tss.PartyID, isBroadcast bool) (bool, error) {
 	msg, err := tss.ParseWireMessage(wireBytes, from, isBroadcast)
 	if err != nil {
 		return false, p.WrapError(err)
@@ -115,7 +115,7 @@ func (p *LocalParty) UpdateFromBytes(wireBytes []byte, from *tss.PartyID, isBroa
 	return p.Update(msg)
 }
 
-func (p *LocalParty) ValidateMessage(msg tss.ParsedMessage) (bool, *tss.Error) {
+func (p *LocalParty) ValidateMessage(msg tss.ParsedMessage) (bool, error) {
 	if ok, err := p.BaseParty.ValidateMessage(msg); !ok || err != nil {
 		return ok, err
 	}
@@ -127,7 +127,7 @@ func (p *LocalParty) ValidateMessage(msg tss.ParsedMessage) (bool, *tss.Error) {
 	return true, nil
 }
 
-func (p *LocalParty) StoreMessage(msg tss.ParsedMessage) (bool, *tss.Error) {
+func (p *LocalParty) StoreMessage(msg tss.ParsedMessage) (bool, error) {
 	// ValidateBasic is cheap; double-check the message here in case the public StoreMessage was called externally
 	if ok, err := p.ValidateMessage(msg); !ok || err != nil {
 		return ok, err

@@ -119,9 +119,9 @@ During the protocol you should provide the party with updates received from othe
 A `Party` has two thread-safe methods on it for receiving updates.
 ```go
 // The main entry point when updating a party's state from the wire
-UpdateFromBytes(wireBytes []byte, from *tss.PartyID, isBroadcast bool) (ok bool, err *tss.Error)
+UpdateFromBytes(wireBytes []byte, from *tss.PartyID, isBroadcast bool) (ok bool, err error)
 // You may use this entry point to update a party's state when running locally or in tests
-Update(msg tss.ParsedMessage) (ok bool, err *tss.Error)
+Update(msg tss.ParsedMessage) (ok bool, err error)
 ```
 
 And a `tss.Message` has the following two methods for converting messages to data for the wire:

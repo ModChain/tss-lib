@@ -26,7 +26,7 @@ func newRound1(params *tss.ReSharingParameters, input, save *keygen.LocalPartySa
 	}
 }
 
-func (round *round1) Start() *tss.Error {
+func (round *round1) Start() error {
 	if round.started {
 		return round.WrapError(errors.New("round already started"))
 	}
@@ -92,7 +92,7 @@ func (round *round1) CanAccept(msg tss.ParsedMessage) bool {
 	return false
 }
 
-func (round *round1) Update() (bool, *tss.Error) {
+func (round *round1) Update() (bool, error) {
 	// only the new committee receive in this round
 	if !round.ReSharingParameters.IsNewCommittee() {
 		return true, nil

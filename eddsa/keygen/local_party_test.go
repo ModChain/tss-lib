@@ -50,7 +50,7 @@ func TestE2EConcurrentAndSaveFixtures(t *testing.T) {
 	p2pCtx := tss.NewPeerContext(pIDs)
 	parties := make([]*LocalParty, 0, len(pIDs))
 
-	errCh := make(chan *tss.Error, len(pIDs))
+	errCh := make(chan error, len(pIDs))
 	outCh := make(chan tss.Message, len(pIDs))
 	endCh := make(chan *LocalPartySaveData, len(pIDs))
 

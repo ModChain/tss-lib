@@ -60,7 +60,7 @@ func TestE2EConcurrent(t *testing.T) {
 	newCommittee := make([]*LocalParty, 0, newPCount)
 	bothCommitteesPax := len(oldCommittee) + len(newCommittee)
 
-	errCh := make(chan *tss.Error, bothCommitteesPax)
+	errCh := make(chan error, bothCommitteesPax)
 	outCh := make(chan tss.Message, bothCommitteesPax)
 	endCh := make(chan *keygen.LocalPartySaveData, bothCommitteesPax)
 
@@ -159,7 +159,7 @@ signing:
 	signP2pCtx := tss.NewPeerContext(signPIDs)
 	signParties := make([]*signing.LocalParty, 0, len(signPIDs))
 
-	signErrCh := make(chan *tss.Error, len(signPIDs))
+	signErrCh := make(chan error, len(signPIDs))
 	signOutCh := make(chan tss.Message, len(signPIDs))
 	signEndCh := make(chan *common.SignatureData, len(signPIDs))
 

@@ -18,7 +18,7 @@ import (
 	"github.com/ModChain/tss-lib/v2/tss"
 )
 
-func (round *round3) Start() *tss.Error {
+func (round *round3) Start() error {
 	if round.started {
 		return round.WrapError(errors.New("round already started"))
 	}
@@ -31,7 +31,7 @@ func (round *round3) Start() *tss.Error {
 
 	i := round.PartyID().Index
 
-	errChs := make(chan *tss.Error, (len(round.Parties().IDs())-1)*2)
+	errChs := make(chan error, (len(round.Parties().IDs())-1)*2)
 	wg := sync.WaitGroup{}
 	wg.Add((len(round.Parties().IDs()) - 1) * 2)
 	for j, Pj := range round.Parties().IDs() {
@@ -97,7 +97,10 @@ func (round *round3) Start() *tss.Error {
 	close(errChs)
 	culprits := make([]*tss.PartyID, 0, len(round.Parties().IDs()))
 	for err := range errChs {
-		culprits = append(culprits, err.Culprits()...)
+		var tssErr *tss.Error
+		if errors.As(err, &tssErr) {
+			culprits = append(culprits, tssErr.Culprits()...)
+		}
 	}
 	if len(culprits) > 0 {
 		return round.WrapError(errors.New("failed to calculate Alice_end or Alice_end_wc"), culprits...)
@@ -124,7 +127,7 @@ func (round *round3) Start() *tss.Error {
 	return nil
 }
 
-func (round *round3) Update() (bool, *tss.Error) {
+func (round *round3) Update() (bool, error) {
 	ret := true
 	for j, msg := range round.temp.signRound3Messages {
 		if round.ok[j] {

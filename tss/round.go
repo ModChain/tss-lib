@@ -8,12 +8,12 @@ package tss
 
 type Round interface {
 	Params() *Parameters
-	Start() *Error
-	Update() (bool, *Error)
+	Start() error
+	Update() (bool, error)
 	RoundNumber() int
 	CanAccept(msg ParsedMessage) bool
 	CanProceed() bool
 	NextRound() Round
 	WaitingFor() []*PartyID
-	WrapError(err error, culprits ...*PartyID) *Error
+	WrapError(err error, culprits ...*PartyID) error
 }

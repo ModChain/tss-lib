@@ -18,7 +18,7 @@ import (
 	"github.com/ModChain/tss-lib/v2/tss"
 )
 
-func (round *round4) Start() *tss.Error {
+func (round *round4) Start() error {
 	if round.started {
 		return round.WrapError(errors.New("round already started"))
 	}
@@ -139,7 +139,7 @@ func (round *round4) CanAccept(msg tss.ParsedMessage) bool {
 	return false
 }
 
-func (round *round4) Update() (bool, *tss.Error) {
+func (round *round4) Update() (bool, error) {
 	// accept messages from new -> old&new committees
 	ret := true
 	for j, msg := range round.temp.dgRound4Messages {

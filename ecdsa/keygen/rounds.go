@@ -85,7 +85,7 @@ func (round *base) WaitingFor() []*tss.PartyID {
 	return ids
 }
 
-func (round *base) WrapError(err error, culprits ...*tss.PartyID) *tss.Error {
+func (round *base) WrapError(err error, culprits ...*tss.PartyID) error {
 	return tss.NewError(err, TaskName, round.number, round.PartyID(), culprits...)
 }
 

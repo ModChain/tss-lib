@@ -20,7 +20,7 @@ import (
 
 var zero = big.NewInt(0)
 
-func (round *round2) Start() *tss.Error {
+func (round *round2) Start() error {
 	if round.started {
 		return round.WrapError(errors.New("round already started"))
 	}
@@ -131,7 +131,7 @@ func (round *round2) CanAccept(msg tss.ParsedMessage) bool {
 	return false
 }
 
-func (round *round2) Update() (bool, *tss.Error) {
+func (round *round2) Update() (bool, error) {
 	ret := true
 	if round.ReSharingParams().IsOldCommittee() && round.ReSharingParameters.IsNewCommittee() {
 		// accept messages from new -> old committee

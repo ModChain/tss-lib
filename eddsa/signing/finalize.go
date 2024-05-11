@@ -15,7 +15,7 @@ import (
 	"github.com/ModChain/tss-lib/v2/tss"
 )
 
-func (round *finalization) Start() *tss.Error {
+func (round *finalization) Start() error {
 	if round.started {
 		return round.WrapError(errors.New("round already started"))
 	}
@@ -69,7 +69,7 @@ func (round *finalization) CanAccept(msg tss.ParsedMessage) bool {
 	return false
 }
 
-func (round *finalization) Update() (bool, *tss.Error) {
+func (round *finalization) Update() (bool, error) {
 	// not expecting any incoming messages in this round
 	return false, nil
 }

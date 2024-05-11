@@ -15,23 +15,23 @@ import (
 )
 
 type Party interface {
-	Start() *Error
+	Start() error
 	// The main entry point when updating a party's state from the wire.
 	// isBroadcast should represent whether the message was received via a reliable broadcast
-	UpdateFromBytes(wireBytes []byte, from *PartyID, isBroadcast bool) (ok bool, err *Error)
+	UpdateFromBytes(wireBytes []byte, from *PartyID, isBroadcast bool) (ok bool, err error)
 	// You may use this entry point to update a party's state when running locally or in tests
-	Update(msg ParsedMessage) (ok bool, err *Error)
+	Update(msg ParsedMessage) (ok bool, err error)
 	Running() bool
 	WaitingFor() []*PartyID
-	ValidateMessage(msg ParsedMessage) (bool, *Error)
-	StoreMessage(msg ParsedMessage) (bool, *Error)
+	ValidateMessage(msg ParsedMessage) (bool, error)
+	StoreMessage(msg ParsedMessage) (bool, error)
 	FirstRound() Round
-	WrapError(err error, culprits ...*PartyID) *Error
+	WrapError(err error, culprits ...*PartyID) error
 	PartyID() *PartyID
 	String() string
 
 	// Private lifecycle methods
-	setRound(Round) *Error
+	setRound(Round) error
 	round() Round
 	advance()
 	lock()
@@ -57,7 +57,7 @@ func (p *BaseParty) WaitingFor() []*PartyID {
 	return p.rnd.WaitingFor()
 }
 
-func (p *BaseParty) WrapError(err error, culprits ...*PartyID) *Error {
+func (p *BaseParty) WrapError(err error, culprits ...*PartyID) error {
 	if p.rnd == nil {
 		return NewError(err, "", -1, nil, culprits...)
 	}
@@ -65,7 +65,7 @@ func (p *BaseParty) WrapError(err error, culprits ...*PartyID) *Error {
 }
 
 // an implementation of ValidateMessage that is shared across the different types of parties (keygen, signing, dynamic groups)
-func (p *BaseParty) ValidateMessage(msg ParsedMessage) (bool, *Error) {
+func (p *BaseParty) ValidateMessage(msg ParsedMessage) (bool, error) {
 	if msg == nil || msg.Content() == nil {
 		return false, p.WrapError(fmt.Errorf("received nil msg: %s", msg))
 	}
@@ -89,7 +89,7 @@ func (p *BaseParty) String() string {
 // -----
 // Private lifecycle methods
 
-func (p *BaseParty) setRound(round Round) *Error {
+func (p *BaseParty) setRound(round Round) error {
 	if p.rnd != nil {
 		return p.WrapError(errors.New("a round is already set on this party"))
 	}
@@ -115,7 +115,7 @@ func (p *BaseParty) unlock() {
 
 // ----- //
 
-func BaseStart(p Party, task string, prepare ...func(Round) *Error) *Error {
+func BaseStart(p Party, task string, prepare ...func(Round) error) error {
 	p.lock()
 	defer p.unlock()
 	if p.PartyID() == nil || !p.PartyID().ValidateBasic() {
@@ -144,13 +144,13 @@ func BaseStart(p Party, task string, prepare ...func(Round) *Error) *Error {
 }
 
 // an implementation of Update that is shared across the different types of parties (keygen, signing, dynamic groups)
-func BaseUpdate(p Party, msg ParsedMessage, task string) (ok bool, err *Error) {
+func BaseUpdate(p Party, msg ParsedMessage, task string) (ok bool, err error) {
 	// fast-fail on an invalid message; do not lock the mutex yet
 	if _, err := p.ValidateMessage(msg); err != nil {
 		return false, err
 	}
 	// lock the mutex. need this mtx unlock hook; L108 is recursive so cannot use defer
-	r := func(ok bool, err *Error) (bool, *Error) {
+	r := func(ok bool, err error) (bool, error) {
 		p.unlock()
 		return ok, err
 	}

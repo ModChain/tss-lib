@@ -20,7 +20,7 @@ import (
 	"github.com/ModChain/tss-lib/v2/tss"
 )
 
-func (round *round3) Start() *tss.Error {
+func (round *round3) Start() error {
 	if round.started {
 		return round.WrapError(errors.New("round already started"))
 	}
@@ -227,7 +227,7 @@ func (round *round3) CanAccept(msg tss.ParsedMessage) bool {
 	return false
 }
 
-func (round *round3) Update() (bool, *tss.Error) {
+func (round *round3) Update() (bool, error) {
 	ret := true
 	for j, msg := range round.temp.kgRound3Messages {
 		if round.ok[j] {

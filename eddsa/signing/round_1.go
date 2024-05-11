@@ -25,7 +25,7 @@ func newRound1(params *tss.Parameters, key *keygen.LocalPartySaveData, data *com
 	}
 }
 
-func (round *round1) Start() *tss.Error {
+func (round *round1) Start() error {
 	if round.started {
 		return round.WrapError(errors.New("round already started"))
 	}
@@ -63,7 +63,7 @@ func (round *round1) Start() *tss.Error {
 	return nil
 }
 
-func (round *round1) Update() (bool, *tss.Error) {
+func (round *round1) Update() (bool, error) {
 	ret := true
 	for j, msg := range round.temp.signRound1Messages {
 		if round.ok[j] {

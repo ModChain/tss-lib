@@ -10,7 +10,7 @@ import (
 	"github.com/ModChain/tss-lib/v2/tss"
 )
 
-func SharedPartyUpdater(party tss.Party, msg tss.Message, errCh chan<- *tss.Error) {
+func SharedPartyUpdater(party tss.Party, msg tss.Message, errCh chan<- error) {
 	// do not send a message from this party back to itself
 	if party.PartyID() == msg.GetFrom() {
 		return

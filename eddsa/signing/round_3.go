@@ -19,7 +19,7 @@ import (
 	"github.com/ModChain/tss-lib/v2/tss"
 )
 
-func (round *round3) Start() *tss.Error {
+func (round *round3) Start() error {
 	if round.started {
 		return round.WrapError(errors.New("round already started"))
 	}
@@ -109,7 +109,7 @@ func (round *round3) Start() *tss.Error {
 	return nil
 }
 
-func (round *round3) Update() (bool, *tss.Error) {
+func (round *round3) Update() (bool, error) {
 	ret := true
 	for j, msg := range round.temp.signRound3Messages {
 		if round.ok[j] {

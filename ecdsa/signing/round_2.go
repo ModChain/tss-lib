@@ -17,7 +17,7 @@ import (
 	"github.com/ModChain/tss-lib/v2/tss"
 )
 
-func (round *round2) Start() *tss.Error {
+func (round *round2) Start() error {
 	if round.started {
 		return round.WrapError(errors.New("round already started"))
 	}
@@ -28,7 +28,7 @@ func (round *round2) Start() *tss.Error {
 	i := round.PartyID().Index
 	round.ok[i] = true
 
-	errChs := make(chan *tss.Error, (len(round.Parties().IDs())-1)*2)
+	errChs := make(chan error, (len(round.Parties().IDs())-1)*2)
 	wg := sync.WaitGroup{}
 	wg.Add((len(round.Parties().IDs()) - 1) * 2)
 	ContextI := append(round.temp.ssid, new(big.Int).SetUint64(uint64(i)).Bytes()...)
@@ -106,7 +106,10 @@ func (round *round2) Start() *tss.Error {
 	close(errChs)
 	culprits := make([]*tss.PartyID, 0, len(round.Parties().IDs()))
 	for err := range errChs {
-		culprits = append(culprits, err.Culprits()...)
+		var tssErr *tss.Error
+		if errors.As(err, &tssErr) {
+			culprits = append(culprits, tssErr.Culprits()...)
+		}
 	}
 	if len(culprits) > 0 {
 		return round.WrapError(errors.New("failed to calculate Bob_mid or Bob_mid_wc"), culprits...)
@@ -123,7 +126,7 @@ func (round *round2) Start() *tss.Error {
 	return nil
 }
 
-func (round *round2) Update() (bool, *tss.Error) {
+func (round *round2) Update() (bool, error) {
 	ret := true
 	for j, msg := range round.temp.signRound2Messages {
 		if round.ok[j] {
