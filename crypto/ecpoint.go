@@ -77,7 +77,7 @@ func (p *ECPoint) ToECDSAPubKey() *ecdsa.PublicKey {
 	}
 }
 
-// ToSecp256k1PubKey retruns a [github.com/ModChain/secp256k1.PublicKey] object for this public key
+// ToSecp256k1PubKey returns a [github.com/ModChain/secp256k1.PublicKey] object for this public key
 // or nil if this is not a secp256k1 key.
 func (p *ECPoint) ToSecp256k1PubKey() *secp256k1.PublicKey {
 	if p.curve != secp256k1.S256() {
