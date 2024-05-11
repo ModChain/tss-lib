@@ -11,8 +11,7 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/agl/ed25519/edwards25519"
-
+	"github.com/ModChain/edwards25519"
 	"github.com/ModChain/tss-lib/v2/common"
 )
 

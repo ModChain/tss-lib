@@ -11,9 +11,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ModChain/edwards25519"
 	"github.com/ModChain/tss-lib/v2/tss"
-	"github.com/agl/ed25519/edwards25519"
-	"github.com/decred/dcrd/dcrec/edwards/v2"
 )
 
 func (round *finalization) Start() *tss.Error {
@@ -50,13 +49,13 @@ func (round *finalization) Start() *tss.Error {
 		round.data.M = mBytes
 	}
 
-	pk := edwards.PublicKey{
+	pk := edwards25519.PublicKey{
 		Curve: round.Params().EC(),
 		X:     round.key.EDDSAPub.X(),
 		Y:     round.key.EDDSAPub.Y(),
 	}
 
-	ok := edwards.Verify(&pk, round.data.M, round.temp.r, s)
+	ok := edwards25519.VerifyRS(&pk, round.data.M, round.temp.r, s)
 	if !ok {
 		return round.WrapError(fmt.Errorf("signature verification failed"))
 	}
