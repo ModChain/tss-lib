@@ -7,12 +7,11 @@ import (
 	"crypto/elliptic"
 	"math/big"
 
+	"github.com/ModChain/secp256k1/ecckd"
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/crypto"
 	"github.com/ModChain/tss-lib/v2/crypto/ckd"
 	"github.com/ModChain/tss-lib/v2/ecdsa/keygen"
-
-	"github.com/btcsuite/btcd/chaincfg"
 )
 
 func UpdatePublicKeyAndAdjustBigXj(keyDerivationDelta *big.Int, keys []keygen.LocalPartySaveData, extendedChildPk *ecdsa.PublicKey, ec elliptic.Curve) error {
@@ -45,14 +44,14 @@ func derivingPubkeyFromPath(masterPub *crypto.ECPoint, chainCode []byte, path []
 		Y:     masterPub.Y(),
 	}
 
-	net := &chaincfg.MainNetParams
+	// HDPrivateKeyID: [4]byte{0x04, 0x88, 0xad, 0xe4},
 	extendedParentPk := &ckd.ExtendedKey{
 		PublicKey:  pk,
 		Depth:      0,
 		ChildIndex: 0,
 		ChainCode:  chainCode[:],
 		ParentFP:   []byte{0x00, 0x00, 0x00, 0x00},
-		Version:    net.HDPrivateKeyID[:],
+		Version:    ecckd.BitcoinMainnetPrivate,
 	}
 
 	return ckd.DeriveChildKeyFromHierarchy(path, extendedParentPk, ec.Params().N, ec)

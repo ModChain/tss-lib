@@ -16,6 +16,7 @@ import (
 
 	"github.com/ModChain/base58"
 	"github.com/ModChain/secp256k1"
+	"github.com/ModChain/secp256k1/ecckd"
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/crypto"
 	"golang.org/x/crypto/ripemd160"
@@ -27,7 +28,7 @@ type ExtendedKey struct {
 	ChildIndex uint32
 	ChainCode  []byte // 32 bytes
 	ParentFP   []byte // parent fingerprint
-	Version    []byte
+	Version    ecckd.KeyVersion
 }
 
 // For more information about child key derivation see https://github.com/binance-chain/tss-lib/issues/104
@@ -65,7 +66,7 @@ func (k *ExtendedKey) String() string {
 	binary.BigEndian.PutUint32(childNumBytes[:], k.ChildIndex)
 
 	serializedBytes := make([]byte, 0, serializedKeyLen+4)
-	serializedBytes = append(serializedBytes, k.Version...)
+	serializedBytes = append(serializedBytes, k.Version[:]...)
 	serializedBytes = append(serializedBytes, k.Depth)
 	serializedBytes = append(serializedBytes, k.ParentFP...)
 	serializedBytes = append(serializedBytes, childNumBytes[:]...)
@@ -99,7 +100,8 @@ func NewExtendedKeyFromString(key string, curve elliptic.Curve) (*ExtendedKey, e
 	}
 
 	// Deserialize each of the payload fields.
-	version := payload[:4]
+	var version ecckd.KeyVersion
+	copy(version[:], payload[:4])
 	depth := payload[4:5][0]
 	parentFP := payload[5:9]
 	childNum := binary.BigEndian.Uint32(payload[9:13])
