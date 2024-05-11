@@ -3,10 +3,10 @@
 
 [1]: https://img.shields.io/badge/license-MIT-blue.svg
 [2]: LICENSE
-[3]: https://godoc.org/github.com/bnb-chain/tss-lib?status.svg
-[4]: https://godoc.org/github.com/bnb-chain/tss-lib
-[5]: https://goreportcard.com/badge/github.com/bnb-chain/tss-lib
-[6]: https://goreportcard.com/report/github.com/bnb-chain/tss-lib
+[3]: https://godoc.org/github.com/ModChain/tss-lib?status.svg
+[4]: https://godoc.org/github.com/ModChain/tss-lib
+[5]: https://goreportcard.com/badge/github.com/ModChain/tss-lib
+[6]: https://goreportcard.com/report/github.com/ModChain/tss-lib
 
 Permissively MIT Licensed.
 
