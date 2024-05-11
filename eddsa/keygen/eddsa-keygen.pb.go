@@ -13,10 +13,11 @@
 package keygen
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -26,7 +27,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//
 // Represents a BROADCAST message sent during Round 1 of the EDDSA TSS keygen protocol.
 type KGRound1Message struct {
 	state         protoimpl.MessageState
@@ -75,7 +75,6 @@ func (x *KGRound1Message) GetCommitment() []byte {
 	return nil
 }
 
-//
 // Represents a P2P message sent to each party during Round 2 of the EDDSA TSS keygen protocol.
 type KGRound2Message1 struct {
 	state         protoimpl.MessageState
@@ -124,7 +123,6 @@ func (x *KGRound2Message1) GetShare() []byte {
 	return nil
 }
 
-//
 // Represents a BROADCAST message sent to each party during Round 2 of the EDDSA TSS keygen protocol.
 type KGRound2Message2 struct {
 	state         protoimpl.MessageState

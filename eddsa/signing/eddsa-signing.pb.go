@@ -13,10 +13,11 @@
 package signing
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -26,7 +27,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//
 // Represents a BROADCAST message sent to all parties during Round 1 of the EDDSA TSS signing protocol.
 type SignRound1Message struct {
 	state         protoimpl.MessageState
@@ -75,7 +75,6 @@ func (x *SignRound1Message) GetCommitment() []byte {
 	return nil
 }
 
-//
 // Represents a BROADCAST message sent to all parties during Round 2 of the EDDSA TSS signing protocol.
 type SignRound2Message struct {
 	state         protoimpl.MessageState
@@ -148,7 +147,6 @@ func (x *SignRound2Message) GetProofT() []byte {
 	return nil
 }
 
-//
 // Represents a BROADCAST message sent to all parties during Round 3 of the EDDSA TSS signing protocol.
 type SignRound3Message struct {
 	state         protoimpl.MessageState

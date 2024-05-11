@@ -10,8 +10,8 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/bnb-chain/tss-lib/v2/common"
-	"github.com/bnb-chain/tss-lib/v2/tss"
+	"github.com/ModChain/tss-lib/v2/common"
+	"github.com/ModChain/tss-lib/v2/tss"
 )
 
 func (round *round5) Start() *tss.Error {

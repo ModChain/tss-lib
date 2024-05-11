@@ -20,10 +20,10 @@ import (
 	"github.com/ipfs/go-log"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bnb-chain/tss-lib/v2/common"
-	"github.com/bnb-chain/tss-lib/v2/ecdsa/keygen"
-	"github.com/bnb-chain/tss-lib/v2/test"
-	"github.com/bnb-chain/tss-lib/v2/tss"
+	"github.com/ModChain/tss-lib/v2/common"
+	"github.com/ModChain/tss-lib/v2/ecdsa/keygen"
+	"github.com/ModChain/tss-lib/v2/test"
+	"github.com/ModChain/tss-lib/v2/tss"
 )
 
 const (

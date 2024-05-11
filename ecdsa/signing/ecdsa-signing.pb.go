@@ -13,10 +13,11 @@
 package signing
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -26,7 +27,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//
 // Represents a P2P message sent to each party during Round 1 of the ECDSA TSS signing protocol.
 type SignRound1Message1 struct {
 	state         protoimpl.MessageState
@@ -83,7 +83,6 @@ func (x *SignRound1Message1) GetRangeProofAlice() [][]byte {
 	return nil
 }
 
-//
 // Represents a BROADCAST message sent to all parties during Round 1 of the ECDSA TSS signing protocol.
 type SignRound1Message2 struct {
 	state         protoimpl.MessageState
@@ -132,7 +131,6 @@ func (x *SignRound1Message2) GetCommitment() []byte {
 	return nil
 }
 
-//
 // Represents a P2P message sent to each party during Round 2 of the ECDSA TSS signing protocol.
 type SignRound2Message struct {
 	state         protoimpl.MessageState
@@ -205,7 +203,6 @@ func (x *SignRound2Message) GetProofBobWc() [][]byte {
 	return nil
 }
 
-//
 // Represents a BROADCAST message sent to all parties during Round 3 of the ECDSA TSS signing protocol.
 type SignRound3Message struct {
 	state         protoimpl.MessageState
@@ -254,7 +251,6 @@ func (x *SignRound3Message) GetTheta() []byte {
 	return nil
 }
 
-//
 // Represents a BROADCAST message sent to all parties during Round 4 of the ECDSA TSS signing protocol.
 type SignRound4Message struct {
 	state         protoimpl.MessageState
@@ -327,7 +323,6 @@ func (x *SignRound4Message) GetProofT() []byte {
 	return nil
 }
 
-//
 // Represents a BROADCAST message sent to all parties during Round 5 of the ECDSA TSS signing protocol.
 type SignRound5Message struct {
 	state         protoimpl.MessageState
@@ -376,7 +371,6 @@ func (x *SignRound5Message) GetCommitment() []byte {
 	return nil
 }
 
-//
 // Represents a BROADCAST message sent to all parties during Round 6 of the ECDSA TSS signing protocol.
 type SignRound6Message struct {
 	state         protoimpl.MessageState
@@ -481,7 +475,6 @@ func (x *SignRound6Message) GetVProofU() []byte {
 	return nil
 }
 
-//
 // Represents a BROADCAST message sent to all parties during Round 7 of the ECDSA TSS signing protocol.
 type SignRound7Message struct {
 	state         protoimpl.MessageState
@@ -530,7 +523,6 @@ func (x *SignRound7Message) GetCommitment() []byte {
 	return nil
 }
 
-//
 // Represents a BROADCAST message sent to all parties during Round 8 of the ECDSA TSS signing protocol.
 type SignRound8Message struct {
 	state         protoimpl.MessageState
@@ -579,7 +571,6 @@ func (x *SignRound8Message) GetDeCommitment() [][]byte {
 	return nil
 }
 
-//
 // Represents a BROADCAST message sent to all parties during Round 9 of the ECDSA TSS signing protocol.
 type SignRound9Message struct {
 	state         protoimpl.MessageState

@@ -13,10 +13,11 @@
 package resharing
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -26,7 +27,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//
 // The Round 1 data is broadcast to peers of the New Committee in this message.
 type DGRound1Message struct {
 	state         protoimpl.MessageState
@@ -99,7 +99,6 @@ func (x *DGRound1Message) GetSsid() []byte {
 	return nil
 }
 
-//
 // The Round 2 data is broadcast to other peers of the New Committee in this message.
 type DGRound2Message1 struct {
 	state         protoimpl.MessageState
@@ -196,7 +195,6 @@ func (x *DGRound2Message1) GetDlnproof_2() [][]byte {
 	return nil
 }
 
-//
 // The Round 2 "ACK" is broadcast to peers of the Old Committee in this message.
 type DGRound2Message2 struct {
 	state         protoimpl.MessageState
@@ -236,7 +234,6 @@ func (*DGRound2Message2) Descriptor() ([]byte, []int) {
 	return file_protob_ecdsa_resharing_proto_rawDescGZIP(), []int{2}
 }
 
-//
 // The Round 3 data is sent to peers of the New Committee in this message.
 type DGRound3Message1 struct {
 	state         protoimpl.MessageState
@@ -285,7 +282,6 @@ func (x *DGRound3Message1) GetShare() []byte {
 	return nil
 }
 
-//
 // The Round 3 data is broadcast to peers of the New Committee in this message.
 type DGRound3Message2 struct {
 	state         protoimpl.MessageState
@@ -334,7 +330,6 @@ func (x *DGRound3Message2) GetVDecommitment() [][]byte {
 	return nil
 }
 
-//
 // The Round 4 "ACK" is broadcast to peers of the Old and New Committees from the New Committee in this message.
 type DGRound4Message2 struct {
 	state         protoimpl.MessageState
@@ -374,7 +369,6 @@ func (*DGRound4Message2) Descriptor() ([]byte, []int) {
 	return file_protob_ecdsa_resharing_proto_rawDescGZIP(), []int{5}
 }
 
-//
 // The Round 4 message to peers of New Committees from the New Committee in this message.
 type DGRound4Message1 struct {
 	state         protoimpl.MessageState

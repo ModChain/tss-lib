@@ -1,7 +1,13 @@
-MODULE = github.com/bnb-chain/tss-lib/v2
-PACKAGES = $(shell go list ./... | grep -v '/vendor/')
+#!/bin/make
+GOROOT:=$(shell PATH="/pkg/main/dev-lang.go.dev/bin:$$PATH" go env GOROOT)
+GOPATH:=$(shell $(GOROOT)/bin/go env GOPATH)
 
-all: protob test
+all:
+	$(GOPATH)/bin/goimports -w -l .
+	$(GOROOT)/bin/go build -v ./...
+
+deps:
+	$(GOROOT)/bin/go get -v -t .
 
 ########################################
 ### Protocol Buffers
@@ -14,7 +20,7 @@ protob:
 	done
 
 build: protob
-	go fmt ./...
+	$(GOROOT)/bin/go fmt ./...
 
 ########################################
 ### Testing
@@ -22,14 +28,14 @@ build: protob
 test_unit:
 	@echo "--> Running Unit Tests"
 	@echo "!!! WARNING: This will take a long time :)"
-	go clean -testcache
-	go test -timeout 60m $(PACKAGES)
+	$(GOROOT)/bin/go clean -testcache
+	$(GOROOT)/bin/go test -timeout 60m ./...
 
 test_unit_race:
 	@echo "--> Running Unit Tests (with Race Detection)"
 	@echo "!!! WARNING: This will take a long time :)"
-	go clean -testcache
-	go test -timeout 60m -race $(PACKAGES)
+	$(GOROOT)/bin/go clean -testcache
+	$(GOROOT)/bin/go test -timeout 60m -race ./...
 
 test:
 	make test_unit
