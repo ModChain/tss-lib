@@ -15,7 +15,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/decred/dcrd/dcrec/edwards/v2"
+	"github.com/ModChain/edwards25519"
 	"github.com/ipfs/go-log"
 	"github.com/stretchr/testify/assert"
 
@@ -164,13 +164,13 @@ keygen:
 
 				// build eddsa key pair
 				pkX, pkY := save.EDDSAPub.X(), save.EDDSAPub.Y()
-				pk := edwards.PublicKey{
+				pk := edwards25519.PublicKey{
 					Curve: tss.Edwards(),
 					X:     pkX,
 					Y:     pkY,
 				}
 				println("u len: ", len(u.Bytes()))
-				sk, _, err := edwards.PrivKeyFromScalar(common.PadToLengthBytesInPlace(u.Bytes(), 32))
+				sk, _, err := edwards25519.PrivKeyFromScalar(common.PadToLengthBytesInPlace(u.Bytes(), 32))
 				if !assert.NoError(t, err) {
 					return
 				}
@@ -197,9 +197,9 @@ keygen:
 				for i := range data {
 					data[i] = byte(i)
 				}
-				r, s, err := edwards.Sign(sk, data)
+				r, s, err := edwards25519.SignRS(sk, data)
 				assert.NoError(t, err, "sign should not throw an error")
-				ok := edwards.Verify(&pk, data, r, s)
+				ok := edwards25519.VerifyRS(&pk, data, r, s)
 				assert.True(t, ok, "signature should be ok")
 				t.Log("EDDSA signing test done.")
 

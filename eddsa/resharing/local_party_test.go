@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/decred/dcrd/dcrec/edwards/v2"
+	"github.com/ModChain/edwards25519"
 	"github.com/ipfs/go-log"
 	"github.com/stretchr/testify/assert"
 
@@ -205,18 +205,18 @@ signing:
 
 				// BEGIN EDDSA verify
 				pkX, pkY := signKeys[0].EDDSAPub.X(), signKeys[0].EDDSAPub.Y()
-				pk := edwards.PublicKey{
+				pk := edwards25519.PublicKey{
 					Curve: tss.Edwards(),
 					X:     pkX,
 					Y:     pkY,
 				}
 
-				newSig, err := edwards.ParseSignature(signData.Signature)
+				newSig, err := edwards25519.ParseSignature(signData.Signature)
 				if err != nil {
 					println("new sig error, ", err.Error())
 				}
 
-				ok := edwards.Verify(&pk, big.NewInt(42).Bytes(),
+				ok := edwards25519.VerifyRS(&pk, big.NewInt(42).Bytes(),
 					newSig.R, newSig.S)
 
 				assert.True(t, ok, "eddsa verify must pass")

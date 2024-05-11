@@ -13,8 +13,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/bnb-chain/edwards25519/edwards25519"
-	"github.com/decred/dcrd/dcrec/edwards/v2"
+	"github.com/ModChain/edwards25519"
 	"github.com/ipfs/go-log"
 	"github.com/stretchr/testify/assert"
 
@@ -122,18 +121,18 @@ signing:
 
 				// BEGIN EDDSA verify
 				pkX, pkY := keys[0].EDDSAPub.X(), keys[0].EDDSAPub.Y()
-				pk := edwards.PublicKey{
+				pk := edwards25519.PublicKey{
 					Curve: tss.Edwards(),
 					X:     pkX,
 					Y:     pkY,
 				}
 
-				newSig, err := edwards.ParseSignature(parties[0].data.Signature)
+				newSig, err := edwards25519.ParseSignature(parties[0].data.Signature)
 				if err != nil {
 					println("new sig error, ", err.Error())
 				}
 
-				ok := edwards.Verify(&pk, msg.Bytes(), newSig.R, newSig.S)
+				ok := edwards25519.VerifyRS(&pk, msg.Bytes(), newSig.R, newSig.S)
 				assert.True(t, ok, "eddsa verify must pass")
 				t.Log("EDDSA signing test done.")
 				// END EDDSA verify
@@ -227,18 +226,18 @@ signing:
 
 				// BEGIN EDDSA verify
 				pkX, pkY := keys[0].EDDSAPub.X(), keys[0].EDDSAPub.Y()
-				pk := edwards.PublicKey{
+				pk := edwards25519.PublicKey{
 					Curve: tss.Edwards(),
 					X:     pkX,
 					Y:     pkY,
 				}
 
-				newSig, err := edwards.ParseSignature(parties[0].data.Signature)
+				newSig, err := edwards25519.ParseSignature(parties[0].data.Signature)
 				if err != nil {
 					println("new sig error, ", err.Error())
 				}
 
-				ok := edwards.Verify(&pk, msg, newSig.R, newSig.S)
+				ok := edwards25519.VerifyRS(&pk, msg, newSig.R, newSig.S)
 				assert.True(t, ok, "eddsa verify must pass")
 				t.Log("EDDSA signing test done.")
 				// END EDDSA verify
