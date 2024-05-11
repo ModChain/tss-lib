@@ -17,6 +17,7 @@ import (
 	"math/big"
 
 	"github.com/ModChain/edwards25519"
+	"github.com/ModChain/secp256k1"
 
 	"github.com/ModChain/tss-lib/v2/tss"
 )
@@ -74,6 +75,21 @@ func (p *ECPoint) ToECDSAPubKey() *ecdsa.PublicKey {
 		X:     p.X(),
 		Y:     p.Y(),
 	}
+}
+
+// ToSecp256k1PubKey retruns a [github.com/ModChain/secp256k1.PublicKey] object for this public key
+// or nil if this is not a secp256k1 key.
+func (p *ECPoint) ToSecp256k1PubKey() *secp256k1.PublicKey {
+	if p.curve != secp256k1.S256() {
+		// TODO we may want to allow other ways to bring this curve?
+		return nil
+	}
+	x := &secp256k1.FieldVal{}
+	y := &secp256k1.FieldVal{}
+	x.SetByteSlice(p.X().Bytes())
+	y.SetByteSlice(p.Y().Bytes())
+
+	return secp256k1.NewPublicKey(x, y)
 }
 
 func (p *ECPoint) IsOnCurve() bool {

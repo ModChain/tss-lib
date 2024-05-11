@@ -9,8 +9,8 @@ package ckd_test
 import (
 	"testing"
 
+	"github.com/ModChain/secp256k1"
 	. "github.com/ModChain/tss-lib/v2/crypto/ckd"
-	"github.com/btcsuite/btcd/btcec/v2"
 )
 
 func TestPublicDerivation(t *testing.T) {
@@ -104,7 +104,7 @@ func TestPublicDerivation(t *testing.T) {
 
 tests:
 	for i, test := range tests {
-		extKey, err := NewExtendedKeyFromString(test.master, btcec.S256())
+		extKey, err := NewExtendedKeyFromString(test.master, secp256k1.S256())
 		if err != nil {
 			t.Errorf("NewKeyFromString #%d (%s): unexpected error "+
 				"creating extended key: %v", i, test.name,
@@ -114,7 +114,7 @@ tests:
 
 		for _, childNum := range test.path {
 			var err error
-			_, extKey, err = DeriveChildKey(childNum, extKey, btcec.S256())
+			_, extKey, err = DeriveChildKey(childNum, extKey, secp256k1.S256())
 			if err != nil {
 				t.Errorf("err: %v", err)
 				continue tests

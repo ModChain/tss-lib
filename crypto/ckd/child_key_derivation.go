@@ -14,9 +14,9 @@ import (
 	"hash"
 	"math/big"
 
+	"github.com/ModChain/secp256k1"
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/crypto"
-	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcutil/base58"
 	"golang.org/x/crypto/ripemd160"
 )
@@ -105,8 +105,8 @@ func NewExtendedKeyFromString(key string, curve elliptic.Curve) (*ExtendedKey, e
 
 	var pubKey ecdsa.PublicKey
 
-	if c, ok := curve.(*btcec.KoblitzCurve); ok {
-		pk, err := btcec.ParsePubKey(keyData)
+	if c, ok := curve.(*secp256k1.KoblitzCurve); ok {
+		pk, err := secp256k1.ParsePubKey(keyData)
 		if err != nil {
 			return nil, err
 		}

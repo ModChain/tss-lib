@@ -16,10 +16,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/ipfs/go-log"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ModChain/secp256k1"
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/ecdsa/keygen"
 	"github.com/ModChain/tss-lib/v2/test"
@@ -241,12 +241,12 @@ func TestE2EWithHDKeyDerivation(t *testing.T) {
 	max32b = new(big.Int).Sub(max32b, new(big.Int).SetUint64(1))
 	fillBytes(common.GetRandomPositiveInt(rand.Reader, max32b), chainCode)
 
-	il, extendedChildPk, errorDerivation := derivingPubkeyFromPath(keys[0].ECDSAPub, chainCode, []uint32{12, 209, 3}, btcec.S256())
+	il, extendedChildPk, errorDerivation := derivingPubkeyFromPath(keys[0].ECDSAPub, chainCode, []uint32{12, 209, 3}, secp256k1.S256())
 	assert.NoErrorf(t, errorDerivation, "there should not be an error deriving the child public key")
 
 	keyDerivationDelta := il
 
-	err = UpdatePublicKeyAndAdjustBigXj(keyDerivationDelta, keys, &extendedChildPk.PublicKey, btcec.S256())
+	err = UpdatePublicKeyAndAdjustBigXj(keyDerivationDelta, keys, &extendedChildPk.PublicKey, secp256k1.S256())
 	assert.NoErrorf(t, err, "there should not be an error setting the derived keys")
 
 	// PHASE: signing

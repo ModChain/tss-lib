@@ -2,6 +2,8 @@ github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/ModChain/edwards25519 v1.0.0 h1:Geww/chivFY6E/mZgA4chVf4HWvUgJ1LdRZ0v2d25Eo=
 github.com/ModChain/edwards25519 v1.0.0/go.mod h1:kjiZ1iVWnsHVMHeIgWFu26ik6/jPlE+c9MrfO5wbLm4=
+github.com/ModChain/secp256k1 v0.1.0 h1:dnPBI/FxgtXL0AMI57iCob6EaknV2S8P1jWI1l3G4ns=
+github.com/ModChain/secp256k1 v0.1.0/go.mod h1:vTpIWi8Ht25xL0QXI77Zw6lPs9NKDFBMjYsnQ0RaLsw=
 github.com/aead/siphash v1.0.1/go.mod h1:Nywa3cDsYNNK3gaciGTWPwHt0wlpNV15vwmswBAUSII=
 github.com/binance-chain/edwards25519 v0.0.0-20200305024217-f36fc4b53d43 h1:Vkf7rtHx8uHx8gDfkQaCdVfc+gfrF9v6sR6xJy7RXNg=
 github.com/binance-chain/edwards25519 v0.0.0-20200305024217-f36fc4b53d43/go.mod h1:TnVqVdGEK8b6erOMkcyYGWzCQMw7HEMCOw3BgFYCFWs=

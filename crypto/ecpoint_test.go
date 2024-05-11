@@ -14,7 +14,7 @@ import (
 	"testing"
 
 	"github.com/ModChain/edwards25519"
-	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/ModChain/secp256k1"
 	"github.com/stretchr/testify/assert"
 
 	. "github.com/ModChain/tss-lib/v2/crypto"
@@ -121,12 +121,12 @@ func TestUnFlattenECPoints(t *testing.T) {
 }
 
 func TestS256EcpointJsonSerialization(t *testing.T) {
-	ec := btcec.S256()
+	ec := secp256k1.S256()
 	tss.RegisterCurve("secp256k1", ec)
 
 	pubKeyBytes, err := hex.DecodeString("03935336acb03b2b801d8f8ac5e92c56c4f6e93319901fdfffba9d340a874e2879")
 	assert.NoError(t, err)
-	pbk, err := btcec.ParsePubKey(pubKeyBytes)
+	pbk, err := secp256k1.ParsePubKey(pubKeyBytes)
 	assert.NoError(t, err)
 
 	point, err := NewECPoint(ec, pbk.X(), pbk.Y())

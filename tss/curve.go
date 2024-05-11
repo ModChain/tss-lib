@@ -12,7 +12,7 @@ import (
 	"reflect"
 
 	"github.com/ModChain/edwards25519"
-	s256k1 "github.com/btcsuite/btcd/btcec/v2"
+	"github.com/ModChain/secp256k1"
 )
 
 type CurveName string
@@ -29,10 +29,10 @@ var (
 
 // Init default curve (secp256k1)
 func init() {
-	ec = s256k1.S256()
+	ec = secp256k1.S256()
 
 	registry = make(map[CurveName]elliptic.Curve)
-	registry[Secp256k1] = s256k1.S256()
+	registry[Secp256k1] = secp256k1.S256()
 	registry[Ed25519] = edwards25519.Edwards()
 }
 
@@ -87,7 +87,7 @@ func SetCurve(curve elliptic.Curve) {
 
 // secp256k1
 func S256() elliptic.Curve {
-	return s256k1.S256()
+	return secp256k1.S256()
 }
 
 func Edwards() elliptic.Curve {
