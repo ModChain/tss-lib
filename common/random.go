@@ -119,9 +119,12 @@ func GetRandomBytes(rand io.Reader, length int) ([]byte, error) {
 	if length <= 0 {
 		return nil, errors.New("invalid length")
 	}
+	if rand == nil {
+		rand = cryptorand.Reader
+	}
 
 	buf := make([]byte, length)
-	_, err := rand.Read(buf)
+	_, err := io.ReadFull(rand, buf)
 	if err != nil {
 		return nil, err
 	}
