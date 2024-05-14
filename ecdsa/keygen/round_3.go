@@ -8,10 +8,10 @@ package keygen
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/hashicorp/go-multierror"
-	errors2 "github.com/pkg/errors"
 
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/crypto"
@@ -204,7 +204,7 @@ func (round *round3) Start() error {
 	// 17. compute and SAVE the ECDSA public key `y`
 	ecdsaPubKey, err := crypto.NewECPoint(round.Params().EC(), Vc[0].X(), Vc[0].Y())
 	if err != nil {
-		return round.WrapError(errors2.Wrapf(err, "public key is not on the curve"))
+		return round.WrapError(fmt.Errorf("public key is not on the curve: %w", err))
 	}
 	round.save.ECDSAPub = ecdsaPubKey
 

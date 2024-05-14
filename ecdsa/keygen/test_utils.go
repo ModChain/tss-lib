@@ -16,8 +16,6 @@ import (
 	"runtime"
 	"sort"
 
-	"github.com/pkg/errors"
-
 	"github.com/ModChain/tss-lib/v2/test"
 	"github.com/ModChain/tss-lib/v2/tss"
 )
@@ -43,15 +41,15 @@ func LoadKeygenTestFixtures(qty int, optionalStart ...int) ([]LocalPartySaveData
 		fixtureFilePath := makeTestFixtureFilePath(i)
 		bz, err := ioutil.ReadFile(fixtureFilePath)
 		if err != nil {
-			return nil, nil, errors.Wrapf(err,
-				"could not open the test fixture for party %d in the expected location: %s. run keygen tests first.",
-				i, fixtureFilePath)
+			return nil, nil, fmt.Errorf(
+				"could not open the test fixture for party %d in the expected location: %s. run keygen tests first. Error: %w",
+				i, fixtureFilePath, err)
 		}
 		var key LocalPartySaveData
 		if err = json.Unmarshal(bz, &key); err != nil {
-			return nil, nil, errors.Wrapf(err,
-				"could not unmarshal fixture data for party %d located at: %s",
-				i, fixtureFilePath)
+			return nil, nil, fmt.Errorf(
+				"could not unmarshal fixture data for party %d located at: %s: %w",
+				i, fixtureFilePath, err)
 		}
 		for _, kbxj := range key.BigXj {
 			kbxj.SetCurve(tss.S256())
@@ -81,15 +79,15 @@ func LoadKeygenTestFixturesRandomSet(qty, fixtureCount int) ([]LocalPartySaveDat
 		fixtureFilePath := makeTestFixtureFilePath(i)
 		bz, err := ioutil.ReadFile(fixtureFilePath)
 		if err != nil {
-			return nil, nil, errors.Wrapf(err,
-				"could not open the test fixture for party %d in the expected location: %s. run keygen tests first.",
-				i, fixtureFilePath)
+			return nil, nil, fmt.Errorf(
+				"could not open the test fixture for party %d in the expected location: %s. run keygen tests first. Error: %w",
+				i, fixtureFilePath, err)
 		}
 		var key LocalPartySaveData
 		if err = json.Unmarshal(bz, &key); err != nil {
-			return nil, nil, errors.Wrapf(err,
-				"could not unmarshal fixture data for party %d located at: %s",
-				i, fixtureFilePath)
+			return nil, nil, fmt.Errorf(
+				"could not unmarshal fixture data for party %d located at: %s. Error: %w",
+				i, fixtureFilePath, err)
 		}
 		for _, kbxj := range key.BigXj {
 			kbxj.SetCurve(tss.S256())

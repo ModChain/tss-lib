@@ -8,9 +8,8 @@ package keygen
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
-
-	errors2 "github.com/pkg/errors"
 
 	"github.com/ModChain/tss-lib/v2/crypto/schnorr"
 	"github.com/ModChain/tss-lib/v2/tss"
@@ -49,7 +48,7 @@ func (round *round2) Start() error {
 	ContextI := append(round.temp.ssid, new(big.Int).SetUint64(uint64(i)).Bytes()...)
 	pii, err := schnorr.NewZKProof(ContextI, round.temp.ui, round.temp.vs[0], round.Rand())
 	if err != nil {
-		return round.WrapError(errors2.Wrapf(err, "NewZKProof(ui, vi0)"))
+		return round.WrapError(fmt.Errorf("NewZKProof(ui, vi0): %w", err))
 	}
 
 	// 5. BROADCAST de-commitments of Shamir poly*G and Schnorr prove

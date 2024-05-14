@@ -8,9 +8,8 @@ package signing
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
-
-	errors2 "github.com/pkg/errors"
 
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/crypto/schnorr"
@@ -45,7 +44,7 @@ func (round *round4) Start() error {
 	ContextI := append(round.temp.ssid, new(big.Int).SetUint64(uint64(i)).Bytes()...)
 	piGamma, err := schnorr.NewZKProof(ContextI, round.temp.gamma, round.temp.pointGamma, round.Rand())
 	if err != nil {
-		return round.WrapError(errors2.Wrapf(err, "NewZKProof(gamma, bigGamma)"))
+		return round.WrapError(fmt.Errorf("NewZKProof(gamma, bigGamma): %w", err))
 	}
 	round.temp.thetaInverse = thetaInverse
 	r4msg := NewSignRound4Message(round.PartyID(), round.temp.deCommit, piGamma)

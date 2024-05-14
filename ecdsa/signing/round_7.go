@@ -8,9 +8,8 @@ package signing
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
-
-	errors2 "github.com/pkg/errors"
 
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/crypto"
@@ -44,12 +43,12 @@ func (round *round7) Start() error {
 		bigVjX, bigVjY, bigAjX, bigAjY := values[0], values[1], values[2], values[3]
 		bigVj, err := crypto.NewECPoint(round.Params().EC(), bigVjX, bigVjY)
 		if err != nil {
-			return round.WrapError(errors2.Wrapf(err, "NewECPoint(bigVj)"), Pj)
+			return round.WrapError(fmt.Errorf("NewECPoint(bigVj): %w", err), Pj)
 		}
 		bigVjs[j] = bigVj
 		bigAj, err := crypto.NewECPoint(round.Params().EC(), bigAjX, bigAjY)
 		if err != nil {
-			return round.WrapError(errors2.Wrapf(err, "NewECPoint(bigAj)"), Pj)
+			return round.WrapError(fmt.Errorf("NewECPoint(bigAj): %w", err), Pj)
 		}
 		bigAjs[j] = bigAj
 		pijA, err := r6msg.UnmarshalZKProof(round.Params().EC())

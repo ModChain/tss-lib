@@ -9,12 +9,11 @@ package resharing
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/big"
 	"sync"
 
 	"github.com/ModChain/tss-lib/v2/crypto/facproof"
-
-	errors2 "github.com/pkg/errors"
 
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/crypto"
@@ -174,7 +173,7 @@ func (round *round4) Start() error {
 		for j := 1; j <= len(vjc)-1; j++ {
 			Vc[c], err = Vc[c].Add(vjc[j][c])
 			if err != nil {
-				return round.WrapError(errors2.Wrapf(err, "Vc[c].Add(vjc[j][c])"))
+				return round.WrapError(fmt.Errorf("Vc[c].Add(vjc[j][c]): %w", err))
 			}
 		}
 	}
@@ -204,7 +203,7 @@ func (round *round4) Start() error {
 		newBigXjs[j] = newBigXj
 	}
 	if len(paiProofCulprits) > 0 {
-		return round.WrapError(errors2.Wrapf(err, "newBigXj.Add(Vc[c].ScalarMult(z))"), paiProofCulprits...)
+		return round.WrapError(fmt.Errorf("newBigXj.Add(Vc[c].ScalarMult(z)): %w", err), paiProofCulprits...)
 	}
 
 	round.temp.newXi = newXi

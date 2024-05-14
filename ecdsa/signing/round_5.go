@@ -8,9 +8,8 @@ package signing
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
-
-	errors2 "github.com/pkg/errors"
 
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/crypto"
@@ -42,7 +41,7 @@ func (round *round5) Start() error {
 		}
 		bigGammaJPoint, err := crypto.NewECPoint(round.Params().EC(), bigGammaJ[0], bigGammaJ[1])
 		if err != nil {
-			return round.WrapError(errors2.Wrapf(err, "NewECPoint(bigGammaJ)"), Pj)
+			return round.WrapError(fmt.Errorf("NewECPoint(bigGammaJ): %w", err), Pj)
 		}
 		proof, err := r4msg.UnmarshalZKProof(round.Params().EC())
 		if err != nil {
@@ -54,7 +53,7 @@ func (round *round5) Start() error {
 		}
 		R, err = R.Add(bigGammaJPoint)
 		if err != nil {
-			return round.WrapError(errors2.Wrapf(err, "R.Add(bigGammaJ)"), Pj)
+			return round.WrapError(fmt.Errorf("R.Add(bigGammaJ): %w", err), Pj)
 		}
 	}
 
@@ -76,7 +75,7 @@ func (round *round5) Start() error {
 	bigAi := crypto.ScalarBaseMult(round.Params().EC(), roI)
 	bigVi, err := rToSi.Add(liPoint)
 	if err != nil {
-		return round.WrapError(errors2.Wrapf(err, "rToSi.Add(li)"))
+		return round.WrapError(fmt.Errorf("rToSi.Add(li): %w", err))
 	}
 
 	cmt := commitments.NewHashCommitment(round.Rand(), bigVi.X(), bigVi.Y(), bigAi.X(), bigAi.Y())

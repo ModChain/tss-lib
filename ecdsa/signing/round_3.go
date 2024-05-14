@@ -8,10 +8,9 @@ package signing
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 	"sync"
-
-	errorspkg "github.com/pkg/errors"
 
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/crypto/mta"
@@ -45,7 +44,7 @@ func (round *round3) Start() error {
 			r2msg := round.temp.signRound2Messages[j].Content().(*SignRound2Message)
 			proofBob, err := r2msg.UnmarshalProofBob()
 			if err != nil {
-				errChs <- round.WrapError(errorspkg.Wrapf(err, "UnmarshalProofBob failed"), Pj)
+				errChs <- round.WrapError(fmt.Errorf("UnmarshalProofBob failed: %w", err), Pj)
 				return
 			}
 			alphaIj, err := mta.AliceEnd(
@@ -70,7 +69,7 @@ func (round *round3) Start() error {
 			r2msg := round.temp.signRound2Messages[j].Content().(*SignRound2Message)
 			proofBobWC, err := r2msg.UnmarshalProofBobWC(round.Parameters.EC())
 			if err != nil {
-				errChs <- round.WrapError(errorspkg.Wrapf(err, "UnmarshalProofBobWC failed"), Pj)
+				errChs <- round.WrapError(fmt.Errorf("UnmarshalProofBobWC failed: %w", err), Pj)
 				return
 			}
 			uIj, err := mta.AliceEndWC(

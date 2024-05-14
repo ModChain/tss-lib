@@ -8,9 +8,8 @@ package signing
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
-
-	errors2 "github.com/pkg/errors"
 
 	"github.com/ModChain/tss-lib/v2/crypto/schnorr"
 	"github.com/ModChain/tss-lib/v2/tss"
@@ -28,11 +27,11 @@ func (round *round6) Start() error {
 	ContextI := append(round.temp.ssid, new(big.Int).SetUint64(uint64(i)).Bytes()...)
 	piAi, err := schnorr.NewZKProof(ContextI, round.temp.roi, round.temp.bigAi, round.Rand())
 	if err != nil {
-		return round.WrapError(errors2.Wrapf(err, "NewZKProof(roi, bigAi)"))
+		return round.WrapError(fmt.Errorf("NewZKProof(roi, bigAi): %w", err))
 	}
 	piV, err := schnorr.NewZKVProof(ContextI, round.temp.bigVi, round.temp.bigR, round.temp.si, round.temp.li, round.Rand())
 	if err != nil {
-		return round.WrapError(errors2.Wrapf(err, "NewZKVProof(bigVi, bigR, si, li)"))
+		return round.WrapError(fmt.Errorf("NewZKVProof(bigVi, bigR, si, li): %w", err))
 	}
 
 	r6msg := NewSignRound6Message(round.PartyID(), round.temp.DPower, piAi, piV)

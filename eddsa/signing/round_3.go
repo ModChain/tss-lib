@@ -8,11 +8,12 @@ package signing
 
 import (
 	"crypto/sha512"
+	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/ModChain/edwards25519"
 	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/pkg/errors"
 
 	"github.com/ModChain/tss-lib/v2/crypto"
 	"github.com/ModChain/tss-lib/v2/crypto/commitments"
@@ -55,7 +56,7 @@ func (round *round3) Start() error {
 		Rj, err := crypto.NewECPoint(round.Params().EC(), coordinates[0], coordinates[1])
 		Rj = Rj.EightInvEight()
 		if err != nil {
-			return round.WrapError(errors.Wrapf(err, "NewECPoint(Rj)"), Pj)
+			return round.WrapError(fmt.Errorf("NewECPoint(Rj)", err), Pj)
 		}
 		proof, err := r2msg.UnmarshalZKProof(round.Params().EC())
 		if err != nil {

@@ -7,9 +7,9 @@
 package resharing
 
 import (
+	"errors"
+	"fmt"
 	"math/big"
-
-	"github.com/pkg/errors"
 
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/crypto"
@@ -87,7 +87,7 @@ func (round *round4) Start() error {
 		for j := 1; j <= len(vjc)-1; j++ {
 			Vc[c], err = Vc[c].Add(vjc[j][c])
 			if err != nil {
-				return round.WrapError(errors.Wrapf(err, "Vc[c].Add(vjc[j][c])"))
+				return round.WrapError(fmt.Errorf("Vc[c].Add(vjc[j][c]): %w", err))
 			}
 		}
 	}
@@ -117,7 +117,7 @@ func (round *round4) Start() error {
 		newBigXjs[j] = newBigXj
 	}
 	if len(culprits) > 0 {
-		return round.WrapError(errors.Wrapf(err, "newBigXj.Add(Vc[c].ScalarMult(z))"), culprits...)
+		return round.WrapError(fmt.Errorf("newBigXj.Add(Vc[c].ScalarMult(z))", err), culprits...)
 	}
 
 	round.temp.newXi = newXi

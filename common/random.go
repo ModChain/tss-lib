@@ -11,8 +11,6 @@ import (
 	"fmt"
 	"io"
 	"math/big"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -31,7 +29,7 @@ func MustGetRandomInt(rand io.Reader, bits int) *big.Int {
 	// Generate cryptographically strong pseudo-random int between 0 - max
 	n, err := cryptorand.Int(rand, max)
 	if err != nil {
-		panic(errors.Wrap(err, "rand.Int failure in MustGetRandomInt!"))
+		panic(fmt.Errorf("rand.Int failure in MustGetRandomInt: %w", err))
 	}
 	return n
 }
@@ -117,7 +115,7 @@ func GetRandomQuadraticNonResidue(rand io.Reader, n *big.Int) *big.Int {
 func GetRandomBytes(rand io.Reader, length int) ([]byte, error) {
 	// Per [BIP32], the seed must be in range [MinSeedBytes, MaxSeedBytes].
 	if length <= 0 {
-		return nil, errors.New("invalid length")
+		return nil, fmt.Errorf("invalid random bytes length: %d", length)
 	}
 	if rand == nil {
 		rand = cryptorand.Reader
