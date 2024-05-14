@@ -117,7 +117,7 @@ func (round *round4) Start() error {
 		newBigXjs[j] = newBigXj
 	}
 	if len(culprits) > 0 {
-		return round.WrapError(fmt.Errorf("newBigXj.Add(Vc[c].ScalarMult(z))", err), culprits...)
+		return round.WrapError(fmt.Errorf("newBigXj.Add(Vc[c].ScalarMult(z)): %w", err), culprits...)
 	}
 
 	round.temp.newXi = newXi

@@ -188,7 +188,7 @@ func (round *round3) Start() error {
 	// 18. compute and SAVE the EDDSA public key `y`
 	eddsaPubKey, err := crypto.NewECPoint(round.Params().EC(), Vc[0].X(), Vc[0].Y())
 	if err != nil {
-		return round.WrapError(fmt.Errorf("public key is not on the curve", err))
+		return round.WrapError(fmt.Errorf("public key is not on the curve: %w", err))
 	}
 	round.save.EDDSAPub = eddsaPubKey
 
