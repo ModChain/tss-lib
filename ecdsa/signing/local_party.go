@@ -134,12 +134,13 @@ func NewLocalPartyWithAutoKDD(
 	// local tests and as such is made to update all keys in one go, we don't need that.
 	ec := key.ECDSAPub.Curve()
 
+	var err error
+
 	deltaG := crypto.ScalarBaseMult(ec, keyDerivationDelta)
-	cPk, err := deltaG.Add(key.ECDSAPub)
+	key.ECDSAPub, err = deltaG.Add(key.ECDSAPub)
 	if err != nil {
-		panic(err)
+		return tss.ErrorParty{err}
 	}
-	key.ECDSAPub = cPk
 
 	// before altering key.BigXj, clone it
 	key.BigXj = slices.Clone(key.BigXj)
@@ -149,7 +150,7 @@ func NewLocalPartyWithAutoKDD(
 	for j := range key.BigXj {
 		key.BigXj[j], err = key.BigXj[j].Add(deltaG)
 		if err != nil {
-			panic(err)
+			return tss.ErrorParty{err}
 		}
 	}
 
