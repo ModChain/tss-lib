@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"slices"
 
 	"github.com/ModChain/tss-lib/v2/common"
 	"github.com/ModChain/tss-lib/v2/crypto"
@@ -108,6 +109,52 @@ func NewLocalParty(
 	end chan<- *common.SignatureData,
 	fullBytesLen ...int) tss.Party {
 	return NewLocalPartyWithKDD(msg, params, key, nil, out, end, fullBytesLen...)
+}
+
+// NewLocalPartyWithAutoKDD returns a party with key derivation delta for HD support for a given
+// unmodified master key. The key will be duplicated and the needed values (BigXj etc) will be
+// adjusted for KDD operations.
+func NewLocalPartyWithAutoKDD(
+	msg *big.Int,
+	params *tss.Parameters,
+	key keygen.LocalPartySaveData,
+	keyDerivationDelta *big.Int,
+	out chan<- tss.Message,
+	end chan<- *common.SignatureData,
+	fullBytesLen ...int,
+) tss.Party {
+	if keyDerivationDelta == nil {
+		// no delta means we don't need to do anything
+		return NewLocalPartyWithKDD(msg, params, key, nil, out, end, fullBytesLen...)
+	}
+
+	// see: https://github.com/bnb-chain/tss-lib/issues/293
+	// NewLocalPartyWithKDD requires the key's BigXj/etc to be updated, this method
+	// does that automatically. Note that UpdatePublicKeyAndAdjustBigXj was written for
+	// local tests and as such is made to update all keys in one go, we don't need that.
+	ec := key.ECDSAPub.Curve()
+
+	deltaG := crypto.ScalarBaseMult(ec, keyDerivationDelta)
+	cPk, err := deltaG.Add(key.ECDSAPub)
+	if err != nil {
+		panic(err)
+	}
+	key.ECDSAPub = cPk
+
+	// before altering key.BigXj, clone it
+	key.BigXj = slices.Clone(key.BigXj)
+
+	// Suppose X_j has shamir shares X_j0,     X_j1,     ..., X_jn
+	// So X_j + D has shamir shares  X_j0 + D, X_j1 + D, ..., X_jn + D
+	for j := range key.BigXj {
+		key.BigXj[j], err = key.BigXj[j].Add(deltaG)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	// this should be enough to move forward
+	return NewLocalPartyWithKDD(msg, params, key, keyDerivationDelta, out, end, fullBytesLen...)
 }
 
 // NewLocalPartyWithKDD returns a party with key derivation delta for HD support
