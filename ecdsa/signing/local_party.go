@@ -112,8 +112,12 @@ func NewLocalParty(
 }
 
 // NewLocalPartyWithAutoKDD returns a party with key derivation delta for HD support for a given
-// unmodified master key. The key will be duplicated and the needed values (BigXj etc) will be
-// adjusted for KDD operations.
+// unmodified master key. BigXj and ECDSAPub will be multiplied by the computed deltaG value
+// transparently and any error will be returned as a tss.ErrorParty, so that this method can be
+// used as a drop-in replacement to NewLocalParty.
+//
+// NewLocalPartyWithKDD keeps its original behavior of running the process without performing the
+// initial multiplication in order to not break anyone using or switching to this lib.
 func NewLocalPartyWithAutoKDD(
 	msg *big.Int,
 	params *tss.Parameters,
@@ -129,14 +133,11 @@ func NewLocalPartyWithAutoKDD(
 	}
 
 	// see: https://github.com/bnb-chain/tss-lib/issues/293
-	// NewLocalPartyWithKDD requires the key's BigXj/etc to be updated, this method
-	// does that automatically. Note that UpdatePublicKeyAndAdjustBigXj was written for
-	// local tests and as such is made to update all keys in one go, we don't need that.
-	ec := key.ECDSAPub.Curve()
-
+	// NewLocalPartyWithKDD requires the key's PublicKey and BixXj[...] to be multiplied
+	// by deltaG prior to operation, we do that here.
 	var err error
 
-	deltaG := crypto.ScalarBaseMult(ec, keyDerivationDelta)
+	deltaG := crypto.ScalarBaseMult(key.ECDSAPub.Curve(), keyDerivationDelta)
 	key.ECDSAPub, err = deltaG.Add(key.ECDSAPub)
 	if err != nil {
 		return tss.ErrorParty{err}
