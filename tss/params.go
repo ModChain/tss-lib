@@ -30,6 +30,7 @@ type (
 		noProofFac bool
 		// random sources
 		partialKeyRand, rand io.Reader
+		broker               MessageBroker
 	}
 
 	ReSharingParameters struct {
@@ -56,6 +57,7 @@ func NewParameters(ec elliptic.Curve, ctx *PeerContext, partyID *PartyID, partyC
 		safePrimeGenTimeout: defaultSafePrimeGenTimeout,
 		partialKeyRand:      rand.Reader,
 		rand:                rand.Reader,
+		broker:              NewTestBroker(),
 	}
 }
 
@@ -110,6 +112,14 @@ func (params *Parameters) SetNoProofMod() {
 
 func (params *Parameters) SetNoProofFac() {
 	params.noProofFac = true
+}
+
+func (params *Parameters) SetBroker(b MessageBroker) {
+	params.broker = b
+}
+
+func (params *Parameters) Broker() MessageBroker {
+	return params.broker
 }
 
 func (params *Parameters) PartialKeyRand() io.Reader {

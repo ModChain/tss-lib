@@ -7,11 +7,7 @@ import (
 	sync "sync"
 )
 
-type JsonExpect interface {
-	Receive(msg *JsonMessage) error
-}
-
-// JsonExpect is an object used to collect messages from peers and trigger a callback once
+// jsonExpect is an object used to collect messages from peers and trigger a callback once
 // enough messages have been collected
 type jsonExpect[T any] struct {
 	Type    string
@@ -72,9 +68,9 @@ func JsonWrap(typ string, o any, from *PartyID, to *PartyID) *JsonMessage {
 	return &JsonMessage{Type: typ, From: from, To: to, Data: o}
 }
 
-// NewJsonExpect returns a new JsonExpect of the given type that can be used to collect
+// NewJsonExpect returns a new MessageReceiver of the given type that can be used to collect
 // packets from multiple parties, and trigger a callback once everything has been collected
-func NewJsonExpect[T any](typ string, parties []*PartyID, cb func([]*PartyID, []*T)) JsonExpect {
+func NewJsonExpect[T any](typ string, parties []*PartyID, cb func([]*PartyID, []*T)) MessageReceiver {
 	res := &jsonExpect[T]{
 		Type:    typ,
 		From:    parties,

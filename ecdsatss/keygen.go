@@ -27,7 +27,7 @@ type Keygen struct {
 	data          *Key // key data currently being generated
 	round         int  // current round
 
-	Receiver tss.JsonExpect
+	Receiver tss.MessageReceiver
 }
 
 func NewKeygen(params *tss.Parameters) (*Keygen, error) {
@@ -155,10 +155,11 @@ func (kg *Keygen) round1() error {
 		}
 		otherIds = append(otherIds, p)
 		m := tss.JsonWrap("ecdsa:keygen:round1", msg, Pi, p)
-		_ = m
+		kg.params.Broker().Receive(m)
 	}
 
 	kg.Receiver = tss.NewJsonExpect[keygenRound2msg1]("ecdsa:keygen:round2-1", otherIds, kg.round2)
+	kg.params.Broker().Connect("ecdsa:keygen:round2-1", kg.Receiver)
 
 	return nil
 }
