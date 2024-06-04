@@ -7,8 +7,7 @@
 package common
 
 import (
-	"crypto"
-	_ "crypto/sha512"
+	"crypto/sha512"
 	"encoding/binary"
 	"math/big"
 )
@@ -21,7 +20,7 @@ const (
 // https://en.wikipedia.org/wiki/Template:Comparison_of_SHA_functions
 func SHA512_256(in ...[]byte) []byte {
 	var data []byte
-	state := crypto.SHA512_256.New()
+	state := sha512.New512_256()
 	inLen := len(in)
 	if inLen == 0 {
 		return nil
@@ -57,7 +56,7 @@ func SHA512_256(in ...[]byte) []byte {
 
 func SHA512_256i(in ...*big.Int) *big.Int {
 	var data []byte
-	state := crypto.SHA512_256.New()
+	state := sha512.New512_256()
 	inLen := len(in)
 	if inLen == 0 {
 		return nil
@@ -97,7 +96,7 @@ func SHA512_256i(in ...*big.Int) *big.Int {
 func SHA512_256i_TAGGED(tag []byte, in ...*big.Int) *big.Int {
 	tagBz := SHA512_256(tag)
 	var data []byte
-	state := crypto.SHA512_256.New()
+	state := sha512.New512_256()
 	state.Write(tagBz)
 	state.Write(tagBz)
 	inLen := len(in)
@@ -141,7 +140,7 @@ func SHA512_256i_TAGGED(tag []byte, in ...*big.Int) *big.Int {
 
 func SHA512_256iOne(in *big.Int) *big.Int {
 	var data []byte
-	state := crypto.SHA512_256.New()
+	state := sha512.New512_256()
 	if in == nil {
 		return nil
 	}
