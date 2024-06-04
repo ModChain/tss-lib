@@ -7,9 +7,13 @@ import (
 	sync "sync"
 )
 
+type JsonExpect interface {
+	Receive(msg *JsonMessage) error
+}
+
 // JsonExpect is an object used to collect messages from peers and trigger a callback once
 // enough messages have been collected
-type JsonExpect[T any] struct {
+type jsonExpect[T any] struct {
 	Type    string
 	From    []*PartyID
 	Packet  []*T
@@ -35,6 +39,7 @@ type rawJsonMsg struct {
 
 // UnmarshalJSON will set Type to the right value, and Data to a json.RawMessage of the actual data
 func (j *JsonMessage) UnmarshalJSON(data []byte) error {
+	// use rawJsonMsg to ensure Data is json.RawMessage
 	var v *rawJsonMsg
 	err := json.Unmarshal(data, &v)
 	if err != nil {
@@ -69,8 +74,8 @@ func JsonWrap(typ string, o any, from *PartyID, to *PartyID) *JsonMessage {
 
 // NewJsonExpect returns a new JsonExpect of the given type that can be used to collect
 // packets from multiple parties, and trigger a callback once everything has been collected
-func NewJsonExpect[T any](typ string, parties []*PartyID, cb func([]*PartyID, []*T)) *JsonExpect[T] {
-	res := &JsonExpect[T]{
+func NewJsonExpect[T any](typ string, parties []*PartyID, cb func([]*PartyID, []*T)) JsonExpect {
+	res := &jsonExpect[T]{
 		Type:    typ,
 		From:    parties,
 		Packet:  make([]*T, len(parties)),
@@ -79,10 +84,10 @@ func NewJsonExpect[T any](typ string, parties []*PartyID, cb func([]*PartyID, []
 	return res
 }
 
-func (e *JsonExpect[T]) Receive(msg *JsonMessage) error {
+func (e *jsonExpect[T]) Receive(msg *JsonMessage) error {
 	if msg.Type != e.Type {
 		// ignore
-		return errors.New("unexpected message type")
+		return fmt.Errorf("unexpected message type %s while we want %s", msg.Type, e.Type)
 	}
 
 	e.lock.Lock()
@@ -92,14 +97,17 @@ func (e *JsonExpect[T]) Receive(msg *JsonMessage) error {
 		return errors.New("json expect has completed")
 	}
 
+	// parse object if needed
 	obj, err := JsonGet[T](msg)
 	if err != nil {
 		return err
 	}
 
+	// locate the party
 	ki := msg.From.KeyInt()
 	for n, p := range e.From {
 		if e.Packet[n] != nil {
+			// do not need to run expensive big.Int.Cmp() if we already got the packet
 			continue
 		}
 		if p.KeyInt().Cmp(ki) == 0 {
@@ -112,5 +120,7 @@ func (e *JsonExpect[T]) Receive(msg *JsonMessage) error {
 			return nil
 		}
 	}
+
+	// no party found
 	return errors.New("unexpected source peer")
 }
