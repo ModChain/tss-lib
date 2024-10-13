@@ -6,6 +6,8 @@ github.com/ModChain/edwards25519 v1.0.0 h1:Geww/chivFY6E/mZgA4chVf4HWvUgJ1LdRZ0v
 github.com/ModChain/edwards25519 v1.0.0/go.mod h1:kjiZ1iVWnsHVMHeIgWFu26ik6/jPlE+c9MrfO5wbLm4=
 github.com/ModChain/secp256k1 v0.1.0 h1:dnPBI/FxgtXL0AMI57iCob6EaknV2S8P1jWI1l3G4ns=
 github.com/ModChain/secp256k1 v0.1.0/go.mod h1:vTpIWi8Ht25xL0QXI77Zw6lPs9NKDFBMjYsnQ0RaLsw=
+github.com/ModChain/secp256k1 v0.2.5 h1:jQTNpyJK8tnAT9EHAkAlTOOZFb2tJN8ppM/NVwjydAU=
+github.com/ModChain/secp256k1 v0.2.5/go.mod h1:vTpIWi8Ht25xL0QXI77Zw6lPs9NKDFBMjYsnQ0RaLsw=
 github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
