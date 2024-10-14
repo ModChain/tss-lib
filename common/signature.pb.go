@@ -16,6 +16,7 @@ import (
 	reflect "reflect"
 	sync "sync"
 
+	"github.com/ModChain/secp256k1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
@@ -80,6 +81,15 @@ func (x *SignatureData) GetSignature() []byte {
 		return x.Signature
 	}
 	return nil
+}
+
+func (x *SignatureData) GetSignatureObject() *secp256k1.Signature {
+	r := &secp256k1.ModNScalar{}
+	s := &secp256k1.ModNScalar{}
+	r.SetByteSlice(x.R)
+	s.SetByteSlice(x.S)
+	v := byte(x.SignatureRecovery[0] & 1)
+	return secp256k1.NewSignatureWithRecoveryCode(r, s, v)
 }
 
 func (x *SignatureData) GetSignatureRecovery() []byte {
