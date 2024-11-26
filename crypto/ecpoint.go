@@ -77,6 +77,16 @@ func (p *ECPoint) ToECDSAPubKey() *ecdsa.PublicKey {
 	}
 }
 
+// ToEd25519PubKey returns a [github.com/ModChain/edwards25519.PublicKey] object for this public key
+// or nil if this is not a ed25519 key.
+func (p *ECPoint) ToEd25519PubKey() *edwards25519.PublicKey {
+	return &edwards25519.PublicKey{
+		Curve: p.curve,
+		X:     p.X(),
+		Y:     p.Y(),
+	}
+}
+
 // ToSecp256k1PubKey returns a [github.com/ModChain/secp256k1.PublicKey] object for this public key
 // or nil if this is not a secp256k1 key.
 func (p *ECPoint) ToSecp256k1PubKey() *secp256k1.PublicKey {
