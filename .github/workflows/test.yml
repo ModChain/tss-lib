@@ -1,4 +1,4 @@
-name: Go Test
+name: Tests
 on:
   push:
     branches:
@@ -9,25 +9,23 @@ on:
       - master
 
 jobs:
-  build:
+  test:
     name: Test
-    runs-on: macOS-latest
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.24']
     steps:
-
-      - name: Set up Go 1.22
-        uses: actions/setup-go@v3
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.22.2
-        id: go
+          go-version: ${{ matrix.go-version }}
 
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v4
 
-      - name: Clean dependencies
-        run: go clean --modcache
+      - name: Build
+        run: go build ./...
 
-      - name: Get dependencies
-        run: go mod tidy
-
-      - name: Run Tests
-        run: make test_unit_race
+      - name: Run tests
+        run: go test -timeout 30m -race ./...
