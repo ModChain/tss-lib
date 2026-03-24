@@ -140,7 +140,7 @@ func NewLocalPartyWithAutoKDD(
 	deltaG := crypto.ScalarBaseMult(key.ECDSAPub.Curve(), keyDerivationDelta)
 	key.ECDSAPub, err = deltaG.Add(key.ECDSAPub)
 	if err != nil {
-		return tss.ErrorParty{err}
+		return tss.ErrorParty{Err: err}
 	}
 
 	// before altering key.BigXj, clone it
@@ -151,7 +151,7 @@ func NewLocalPartyWithAutoKDD(
 	for j := range key.BigXj {
 		key.BigXj[j], err = key.BigXj[j].Add(deltaG)
 		if err != nil {
-			return tss.ErrorParty{err}
+			return tss.ErrorParty{Err: err}
 		}
 	}
 
