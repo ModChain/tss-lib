@@ -36,6 +36,9 @@ func (mi *modInt) Sub(x, y *big.Int) *big.Int {
 }
 
 func (mi *modInt) Div(x, y *big.Int) *big.Int {
+	if y == nil || y.Sign() == 0 {
+		return nil
+	}
 	i := new(big.Int)
 	i.Div(x, y)
 	return i.Mod(i, mi.i())

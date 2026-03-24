@@ -36,16 +36,17 @@ func (round *round2) Start() error {
 	Pi := round.PartyID()
 	i := Pi.Index
 
-	// check consistency of SSID
-	r1msg := round.temp.dgRound1Messages[0].Content().(*DGRound1Message)
-	SSID := r1msg.UnmarshalSSID()
+	// check consistency of SSID across all old committee members
+	var SSID []byte
 	for j, Pj := range round.OldParties().IDs() {
-		if j == 0 || j == i {
+		if j == i {
 			continue
 		}
 		r1msg := round.temp.dgRound1Messages[j].Content().(*DGRound1Message)
 		SSIDj := r1msg.UnmarshalSSID()
-		if !bytes.Equal(SSID, SSIDj) {
+		if SSID == nil {
+			SSID = SSIDj
+		} else if !bytes.Equal(SSID, SSIDj) {
 			return round.WrapError(errors.New("ssid mismatch"), Pj)
 		}
 	}

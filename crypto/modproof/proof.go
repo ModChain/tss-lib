@@ -51,6 +51,9 @@ func NewProof(Session []byte, N, P, Q *big.Int, rand io.Reader) (*ProofMod, erro
 	// Fig 16.3
 	modN, modPhi := common.ModInt(N), common.ModInt(Phi)
 	invN := new(big.Int).ModInverse(N, Phi)
+	if invN == nil {
+		return nil, fmt.Errorf("modular inverse of N mod Phi does not exist")
+	}
 	X := [Iterations]*big.Int{}
 	// Fix bitLen of A and B
 	A := new(big.Int).Lsh(one, Iterations)

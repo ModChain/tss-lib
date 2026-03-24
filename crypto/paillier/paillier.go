@@ -193,6 +193,9 @@ func (privateKey *PrivateKey) Decrypt(c *big.Int) (m *big.Int, err error) {
 	Lg := L(new(big.Int).Exp(privateKey.Gamma(), privateKey.LambdaN, N2), privateKey.N)
 	// 3. (1) * modInv(2) mod N
 	inv := new(big.Int).ModInverse(Lg, privateKey.N)
+	if inv == nil {
+		return nil, errors.New("modular inverse of Lg does not exist")
+	}
 	m = common.ModInt(privateKey.N).Mul(Lc, inv)
 	return
 }
@@ -203,15 +206,18 @@ func (privateKey *PrivateKey) Decrypt(c *big.Int) (m *big.Int, err error) {
 // An efficient non-interactive statistical zero-knowledge proof system for quasi-safe prime products.
 // In: In Proc. of the 5th ACM Conference on Computer and Communications Security (CCS-98. Citeseer (1998)
 
-func (privateKey *PrivateKey) Proof(k *big.Int, ecdsaPub *crypto2.ECPoint) Proof {
+func (privateKey *PrivateKey) Proof(k *big.Int, ecdsaPub *crypto2.ECPoint) (Proof, error) {
 	var pi Proof
 	iters := ProofIters
 	xs := GenerateXs(iters, k, privateKey.N, ecdsaPub)
+	M := new(big.Int).ModInverse(privateKey.N, privateKey.PhiN)
+	if M == nil {
+		return pi, errors.New("modular inverse of N mod PhiN does not exist")
+	}
 	for i := 0; i < iters; i++ {
-		M := new(big.Int).ModInverse(privateKey.N, privateKey.PhiN)
 		pi[i] = new(big.Int).Exp(xs[i], M, privateKey.N)
 	}
-	return pi
+	return pi, nil
 }
 
 func (pf Proof) Verify(pkN, k *big.Int, ecdsaPub *crypto2.ECPoint) (bool, error) {

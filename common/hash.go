@@ -69,7 +69,11 @@ func SHA512_256i(in ...*big.Int) *big.Int {
 	binary.LittleEndian.PutUint64(inLenBz, uint64(inLen))
 	ptrs := make([][]byte, inLen)
 	for i, n := range in {
-		ptrs[i] = n.Bytes()
+		if n == nil {
+			ptrs[i] = zero.Bytes()
+		} else {
+			ptrs[i] = n.Bytes()
+		}
 		bzSize += len(ptrs[i])
 	}
 	dataCap := len(inLenBz) + bzSize + inLen + (inLen * 8)

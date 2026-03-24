@@ -114,7 +114,8 @@ func TestProofVerify(t *testing.T) {
 	ki := common.MustGetRandomInt(rand.Reader, 256)                     // index
 	ui := common.GetRandomPositiveInt(rand.Reader, tss.EC().Params().N) // ECDSA private
 	yX, yY := tss.EC().ScalarBaseMult(ui.Bytes())                       // ECDSA public
-	proof := privateKey.Proof(ki, crypto.NewECPointNoCurveCheck(tss.EC(), yX, yY))
+	proof, err := privateKey.Proof(ki, crypto.NewECPointNoCurveCheck(tss.EC(), yX, yY))
+	assert.NoError(t, err)
 	res, err := proof.Verify(publicKey.N, ki, crypto.NewECPointNoCurveCheck(tss.EC(), yX, yY))
 	assert.NoError(t, err)
 	assert.True(t, res, "proof verify result must be true")
@@ -125,7 +126,8 @@ func TestProofVerifyFail(t *testing.T) {
 	ki := common.MustGetRandomInt(rand.Reader, 256)                     // index
 	ui := common.GetRandomPositiveInt(rand.Reader, tss.EC().Params().N) // ECDSA private
 	yX, yY := tss.EC().ScalarBaseMult(ui.Bytes())                       // ECDSA public
-	proof := privateKey.Proof(ki, crypto.NewECPointNoCurveCheck(tss.EC(), yX, yY))
+	proof, err := privateKey.Proof(ki, crypto.NewECPointNoCurveCheck(tss.EC(), yX, yY))
+	assert.NoError(t, err)
 	last := proof[len(proof)-1]
 	last.Sub(last, big.NewInt(1))
 	res, err := proof.Verify(publicKey.N, ki, crypto.NewECPointNoCurveCheck(tss.EC(), yX, yY))

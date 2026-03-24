@@ -114,7 +114,10 @@ func (share *Share) Verify(ec elliptic.Curve, threshold int, vs Vs) bool {
 }
 
 func (shares Shares) ReConstruct(ec elliptic.Curve) (secret *big.Int, err error) {
-	if shares != nil && shares[0].Threshold > len(shares) {
+	if shares == nil || len(shares) == 0 {
+		return nil, errors.New("no shares provided")
+	}
+	if shares[0].Threshold > len(shares) {
 		return nil, ErrNumSharesBelowThreshold
 	}
 	modN := common.ModInt(ec.Params().N)
@@ -134,6 +137,9 @@ func (shares Shares) ReConstruct(ec elliptic.Curve) (secret *big.Int, err error)
 			}
 			sub := modN.Sub(xs[j], share.ID)
 			subInv := modN.ModInverse(sub)
+			if subInv == nil {
+				return nil, fmt.Errorf("modular inverse does not exist (duplicate share IDs at index %d and %d)", i, j)
+			}
 			div := modN.Mul(xs[j], subInv)
 			times = modN.Mul(times, div)
 		}

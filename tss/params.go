@@ -47,6 +47,15 @@ const (
 
 // Exported, used in `tss` client
 func NewParameters(ec elliptic.Curve, ctx *PeerContext, partyID *PartyID, partyCount, threshold int) *Parameters {
+	if ec == nil {
+		panic("NewParameters: ec must not be nil")
+	}
+	if partyCount < 1 {
+		panic("NewParameters: partyCount must be positive")
+	}
+	if threshold < 0 || threshold >= partyCount {
+		panic("NewParameters: threshold must satisfy 0 <= threshold < partyCount")
+	}
 	return &Parameters{
 		ec:                  ec,
 		parties:             ctx,

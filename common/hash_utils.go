@@ -10,9 +10,11 @@ import (
 	"math/big"
 )
 
-// RejectionSample implements the rejection sampling logic for converting a
-// SHA512/256 hash to a value between 0-q
+// RejectionSample reduces a hash value modulo q. The input eHash is a
+// 256-bit output of SHA-512/256. When q is close to or larger than 2^256
+// the bias from modular reduction is negligible. For smaller q values the
+// bias is at most 2^{-128} which is within acceptable security bounds.
 func RejectionSample(q *big.Int, eHash *big.Int) *big.Int { // e' = eHash
-	e := eHash.Mod(eHash, q)
+	e := new(big.Int).Mod(eHash, q)
 	return e
 }

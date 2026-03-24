@@ -34,11 +34,11 @@ func (round *round4) Start() error {
 			continue
 		}
 		r3msg := round.temp.signRound3Messages[j].Content().(*SignRound3Message)
-		theltaJ := r3msg.GetTheta()
-		thetaInverse = modN.Add(thetaInverse, new(big.Int).SetBytes(theltaJ))
+		thetaJ := r3msg.GetTheta()
+		thetaInverse = modN.Add(thetaInverse, new(big.Int).SetBytes(thetaJ))
 	}
 
-	// compute the multiplicative inverse thelta mod q
+	// compute the multiplicative inverse of theta mod q
 	thetaInverse = modN.ModInverse(thetaInverse)
 	i := round.PartyID().Index
 	ContextI := append(round.temp.ssid, new(big.Int).SetUint64(uint64(i)).Bytes()...)

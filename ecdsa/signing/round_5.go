@@ -64,9 +64,10 @@ func (round *round5) Start() error {
 	ry := R.Y()
 	si := modN.Add(modN.Mul(round.temp.m, round.temp.k), modN.Mul(rx, round.temp.sigma))
 
-	// clear temp.w and temp.k from memory, lint ignore
+	// clear secret values from memory, lint ignore
 	round.temp.w = zero
 	round.temp.k = zero
+	round.temp.gamma = zero
 
 	li := common.GetRandomPositiveInt(round.Rand(), N)  // li
 	roI := common.GetRandomPositiveInt(round.Rand(), N) // pi

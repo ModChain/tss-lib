@@ -57,7 +57,7 @@ func (round *round7) Start() error {
 		}
 		pijV, err := r6msg.UnmarshalZKVProof(round.Params().EC())
 		if err != nil || !pijV.Verify(ContextJ, bigVj, round.temp.bigR) {
-			return round.WrapError(errors.New("vverify for Vj failed"), Pj)
+			return round.WrapError(errors.New("verify for Vj failed"), Pj)
 		}
 	}
 
