@@ -27,5 +27,10 @@ jobs:
       - name: Build
         run: go build ./...
 
-      - name: Run tests
-        run: go test -timeout 30m -race ./...
+      - name: Run tests with coverage
+        run: go test -timeout 30m -race -covermode=atomic -coverprofile=coverage.out ./...
+
+      - name: Upload coverage to Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          file: coverage.out

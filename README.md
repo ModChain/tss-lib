@@ -1,12 +1,14 @@
 # Multi-Party Threshold Signature Scheme
-[![MIT licensed][1]][2] [![GoDoc][3]][4] [![Go Report Card][5]][6]
+[![MIT licensed][1]][2] [![GoDoc][3]][4] [![Go Report Card][5]][6] [![Coverage Status][7]][8]
 
 [1]: https://img.shields.io/badge/license-MIT-blue.svg
 [2]: LICENSE
-[3]: https://godoc.org/github.com/ModChain/tss-lib/v2?status.svg
-[4]: https://godoc.org/github.com/ModChain/tss-lib/v2
-[5]: https://goreportcard.com/badge/github.com/ModChain/tss-lib
-[6]: https://goreportcard.com/report/github.com/ModChain/tss-lib
+[3]: https://godoc.org/github.com/KarpelesLab/tss-lib/v2?status.svg
+[4]: https://godoc.org/github.com/KarpelesLab/tss-lib/v2
+[5]: https://goreportcard.com/badge/github.com/KarpelesLab/tss-lib
+[6]: https://goreportcard.com/report/github.com/KarpelesLab/tss-lib
+[7]: https://coveralls.io/repos/github/KarpelesLab/tss-lib/badge.svg?branch=master
+[8]: https://coveralls.io/github/KarpelesLab/tss-lib?branch=master
 
 Permissively MIT Licensed.
 
