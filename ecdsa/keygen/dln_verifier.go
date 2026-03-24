@@ -13,6 +13,7 @@ import (
 	"github.com/ModChain/tss-lib/v2/crypto/dlnproof"
 )
 
+// DlnProofVerifier verifies DLN proofs with bounded concurrency.
 type DlnProofVerifier struct {
 	semaphore chan interface{}
 }
@@ -22,6 +23,7 @@ type message interface {
 	UnmarshalDLNProof2() (*dlnproof.Proof, error)
 }
 
+// NewDlnProofVerifier creates a new DlnProofVerifier with the given concurrency limit.
 func NewDlnProofVerifier(concurrency int) *DlnProofVerifier {
 	if concurrency == 0 {
 		panic(errors.New("NewDlnProofverifier: concurrency level must not be zero"))
@@ -34,6 +36,7 @@ func NewDlnProofVerifier(concurrency int) *DlnProofVerifier {
 	}
 }
 
+// VerifyDLNProof1 asynchronously verifies the first DLN proof from the message and calls onDone with the result.
 func (dpv *DlnProofVerifier) VerifyDLNProof1(
 	m message,
 	h1, h2, n *big.Int,
@@ -53,6 +56,7 @@ func (dpv *DlnProofVerifier) VerifyDLNProof1(
 	}()
 }
 
+// VerifyDLNProof2 asynchronously verifies the second DLN proof from the message and calls onDone with the result.
 func (dpv *DlnProofVerifier) VerifyDLNProof2(
 	m message,
 	h1, h2, n *big.Int,

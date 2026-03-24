@@ -22,18 +22,22 @@ import (
 )
 
 type (
+	// Share represents a single Shamir secret share with its threshold, party ID, and share value.
 	Share struct {
 		Threshold int
 		ID,       // xi
 		Share *big.Int // Sigma i
 	}
 
+	// Vs is a slice of EC points representing the Feldman VSS commitments (v0..vt).
 	Vs []*crypto.ECPoint // v0..vt
 
+	// Shares is a slice of secret shares.
 	Shares []*Share
 )
 
 var (
+	// ErrNumSharesBelowThreshold is returned when there are fewer shares than required by the threshold.
 	ErrNumSharesBelowThreshold = fmt.Errorf("not enough shares to satisfy the threshold")
 
 	zero = big.NewInt(0)
@@ -92,6 +96,7 @@ func Create(ec elliptic.Curve, threshold int, secret *big.Int, indexes []*big.In
 	return v, shares, nil
 }
 
+// Verify checks the share against the Feldman VSS commitments to ensure it is consistent.
 func (share *Share) Verify(ec elliptic.Curve, threshold int, vs Vs) bool {
 	if share.Threshold != threshold || vs == nil || len(vs) != threshold+1 {
 		return false
@@ -113,6 +118,7 @@ func (share *Share) Verify(ec elliptic.Curve, threshold int, vs Vs) bool {
 	return sigmaGi.Equals(v)
 }
 
+// ReConstruct recovers the secret from the shares using Lagrange interpolation.
 func (shares Shares) ReConstruct(ec elliptic.Curve) (secret *big.Int, err error) {
 	if shares == nil || len(shares) == 0 {
 		return nil, errors.New("no shares provided")

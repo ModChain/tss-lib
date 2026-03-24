@@ -38,16 +38,19 @@ type Party interface {
 	unlock()
 }
 
+// BaseParty provides a base implementation of the Party interface with shared state and lifecycle management.
 type BaseParty struct {
 	mtx        sync.Mutex
 	rnd        Round
 	FirstRound Round
 }
 
+// Running returns true if the party has started and a round is currently set.
 func (p *BaseParty) Running() bool {
 	return p.rnd != nil
 }
 
+// WaitingFor returns the list of party IDs from whom messages are still expected in the current round.
 func (p *BaseParty) WaitingFor() []*PartyID {
 	p.lock()
 	defer p.unlock()
@@ -57,6 +60,7 @@ func (p *BaseParty) WaitingFor() []*PartyID {
 	return p.rnd.WaitingFor()
 }
 
+// WrapError wraps an error with contextual information about the current round and any culprit parties.
 func (p *BaseParty) WrapError(err error, culprits ...*PartyID) error {
 	if p.rnd == nil {
 		return NewError(err, "", -1, nil, culprits...)
@@ -78,6 +82,7 @@ func (p *BaseParty) ValidateMessage(msg ParsedMessage) (bool, error) {
 	return true, nil
 }
 
+// String returns a human-readable representation of the party's current round state.
 func (p *BaseParty) String() string {
 	if rnd := p.round(); rnd != nil {
 		return fmt.Sprintf("round: %d", rnd.RoundNumber())
@@ -115,6 +120,7 @@ func (p *BaseParty) unlock() {
 
 // ----- //
 
+// BaseStart initializes and starts the first round of a party's protocol execution.
 func BaseStart(p Party, task string, prepare ...func(Round) error) error {
 	p.lock()
 	defer p.unlock()

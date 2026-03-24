@@ -15,6 +15,7 @@ import (
 )
 
 type (
+	// LocalSecrets holds the secret share data that is not shared with other parties.
 	LocalSecrets struct {
 		// secret fields (not shared, but stored locally)
 		Xi, ShareID *big.Int // xi, kj
@@ -35,6 +36,7 @@ type (
 	}
 )
 
+// NewLocalPartySaveData initializes a LocalPartySaveData with slices pre-allocated for the given party count.
 func NewLocalPartySaveData(partyCount int) (saveData LocalPartySaveData) {
 	saveData.Ks = make([]*big.Int, partyCount)
 	saveData.BigXj = make([]*crypto.ECPoint, partyCount)

@@ -35,6 +35,7 @@ var (
 
 // ----- //
 
+// NewKGRound1Message creates a broadcast message for round 1 containing the commitment, Paillier public key, and DLN proofs.
 func NewKGRound1Message(
 	from *tss.PartyID,
 	ct cmt.HashCommitment,
@@ -67,6 +68,7 @@ func NewKGRound1Message(
 	return tss.NewMessage(meta, content, msg), nil
 }
 
+// ValidateBasic checks that all required fields in the round 1 message are non-empty.
 func (m *KGRound1Message) ValidateBasic() bool {
 	return m != nil &&
 		common.NonEmptyBytes(m.GetCommitment()) &&
@@ -79,36 +81,44 @@ func (m *KGRound1Message) ValidateBasic() bool {
 		common.NonEmptyMultiBytes(m.GetDlnproof_2(), 2+(dlnproof.Iterations*2))
 }
 
+// UnmarshalCommitment deserializes the hash commitment from the message.
 func (m *KGRound1Message) UnmarshalCommitment() *big.Int {
 	return new(big.Int).SetBytes(m.GetCommitment())
 }
 
+// UnmarshalPaillierPK deserializes the Paillier public key from the message.
 func (m *KGRound1Message) UnmarshalPaillierPK() *paillier.PublicKey {
 	return &paillier.PublicKey{N: new(big.Int).SetBytes(m.GetPaillierN())}
 }
 
+// UnmarshalNTilde deserializes the NTilde value from the message.
 func (m *KGRound1Message) UnmarshalNTilde() *big.Int {
 	return new(big.Int).SetBytes(m.GetNTilde())
 }
 
+// UnmarshalH1 deserializes the H1 value from the message.
 func (m *KGRound1Message) UnmarshalH1() *big.Int {
 	return new(big.Int).SetBytes(m.GetH1())
 }
 
+// UnmarshalH2 deserializes the H2 value from the message.
 func (m *KGRound1Message) UnmarshalH2() *big.Int {
 	return new(big.Int).SetBytes(m.GetH2())
 }
 
+// UnmarshalDLNProof1 deserializes the first DLN proof from the message.
 func (m *KGRound1Message) UnmarshalDLNProof1() (*dlnproof.Proof, error) {
 	return dlnproof.UnmarshalDLNProof(m.GetDlnproof_1())
 }
 
+// UnmarshalDLNProof2 deserializes the second DLN proof from the message.
 func (m *KGRound1Message) UnmarshalDLNProof2() (*dlnproof.Proof, error) {
 	return dlnproof.UnmarshalDLNProof(m.GetDlnproof_2())
 }
 
 // ----- //
 
+// NewKGRound2Message1 creates a point-to-point message for round 2 containing a VSS share and factorization proof.
 func NewKGRound2Message1(
 	to, from *tss.PartyID,
 	share *vss.Share,
@@ -128,6 +138,7 @@ func NewKGRound2Message1(
 	return tss.NewMessage(meta, content, msg)
 }
 
+// ValidateBasic checks that all required fields in the round 2 message 1 are non-empty.
 func (m *KGRound2Message1) ValidateBasic() bool {
 	return m != nil &&
 		common.NonEmptyBytes(m.GetShare())
@@ -135,16 +146,19 @@ func (m *KGRound2Message1) ValidateBasic() bool {
 	// && common.NonEmptyMultiBytes(m.GetFacProof(), facproof.ProofFacBytesParts)
 }
 
+// UnmarshalShare deserializes the VSS share from the message.
 func (m *KGRound2Message1) UnmarshalShare() *big.Int {
 	return new(big.Int).SetBytes(m.Share)
 }
 
+// UnmarshalFacProof deserializes the factorization proof from the message.
 func (m *KGRound2Message1) UnmarshalFacProof() (*facproof.ProofFac, error) {
 	return facproof.NewProofFromBytes(m.GetFacProof())
 }
 
 // ----- //
 
+// NewKGRound2Message2 creates a broadcast message for round 2 containing the de-commitment and modulus proof.
 func NewKGRound2Message2(
 	from *tss.PartyID,
 	deCommitment cmt.HashDeCommitment,
@@ -164,6 +178,7 @@ func NewKGRound2Message2(
 	return tss.NewMessage(meta, content, msg)
 }
 
+// ValidateBasic checks that all required fields in the round 2 message 2 are non-empty.
 func (m *KGRound2Message2) ValidateBasic() bool {
 	return m != nil &&
 		common.NonEmptyMultiBytes(m.GetDeCommitment())
@@ -171,17 +186,20 @@ func (m *KGRound2Message2) ValidateBasic() bool {
 	// && common.NonEmptyMultiBytes(m.GetModProof(), modproof.ProofModBytesParts)
 }
 
+// UnmarshalDeCommitment deserializes the hash de-commitment from the message.
 func (m *KGRound2Message2) UnmarshalDeCommitment() []*big.Int {
 	deComBzs := m.GetDeCommitment()
 	return cmt.NewHashDeCommitmentFromBytes(deComBzs)
 }
 
+// UnmarshalModProof deserializes the modulus proof from the message.
 func (m *KGRound2Message2) UnmarshalModProof() (*modproof.ProofMod, error) {
 	return modproof.NewProofFromBytes(m.GetModProof())
 }
 
 // ----- //
 
+// NewKGRound3Message creates a broadcast message for round 3 containing the Paillier proof.
 func NewKGRound3Message(
 	from *tss.PartyID,
 	proof paillier.Proof,
@@ -204,11 +222,13 @@ func NewKGRound3Message(
 	return tss.NewMessage(meta, content, msg)
 }
 
+// ValidateBasic checks that all required fields in the round 3 message are non-empty.
 func (m *KGRound3Message) ValidateBasic() bool {
 	return m != nil &&
 		common.NonEmptyMultiBytes(m.GetPaillierProof(), paillier.ProofIters)
 }
 
+// UnmarshalProofInts deserializes the Paillier proof integers from the message.
 func (m *KGRound3Message) UnmarshalProofInts() paillier.Proof {
 	var pf paillier.Proof
 	proofBzs := m.GetPaillierProof()

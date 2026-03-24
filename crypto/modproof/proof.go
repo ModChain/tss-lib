@@ -15,13 +15,16 @@ import (
 )
 
 const (
-	Iterations         = 80
+	// Iterations is the number of iterations used in the modular proof for soundness.
+	Iterations = 80
+	// ProofModBytesParts is the number of byte parts in a serialized ProofMod.
 	ProofModBytesParts = Iterations*2 + 3
 )
 
 var one = big.NewInt(1)
 
 type (
+	// ProofMod is a zero-knowledge proof that N is a product of two primes (Paillier-Blum modulus proof).
 	ProofMod struct {
 		W *big.Int
 		X [Iterations]*big.Int
@@ -36,6 +39,7 @@ func isQuadraticResidue(X, N *big.Int) bool {
 	return big.Jacobi(X, N) == 1
 }
 
+// NewProof generates a new modular proof that N = P*Q where P and Q are safe primes.
 func NewProof(Session []byte, N, P, Q *big.Int, rand io.Reader) (*ProofMod, error) {
 	Phi := new(big.Int).Mul(new(big.Int).Sub(P, one), new(big.Int).Sub(Q, one))
 	// Fig 16.1
@@ -90,6 +94,7 @@ func NewProof(Session []byte, N, P, Q *big.Int, rand io.Reader) (*ProofMod, erro
 	return pf, nil
 }
 
+// NewProofFromBytes reconstructs a ProofMod from a slice of byte slices.
 func NewProofFromBytes(bzs [][]byte) (*ProofMod, error) {
 	if !common.NonEmptyMultiBytes(bzs, ProofModBytesParts) {
 		return nil, fmt.Errorf("expected %d byte parts to construct ProofMod", ProofModBytesParts)
@@ -114,6 +119,7 @@ func NewProofFromBytes(bzs [][]byte) (*ProofMod, error) {
 	}, nil
 }
 
+// Verify checks whether the modular proof is valid for the given modulus N.
 func (pf *ProofMod) Verify(Session []byte, N *big.Int) bool {
 	if pf == nil || !pf.ValidateBasic() {
 		return false
@@ -203,6 +209,7 @@ func (pf *ProofMod) Verify(Session []byte, N *big.Int) bool {
 	return true
 }
 
+// ValidateBasic checks that all fields of the proof are non-nil.
 func (pf *ProofMod) ValidateBasic() bool {
 	if pf.W == nil {
 		return false
@@ -226,6 +233,7 @@ func (pf *ProofMod) ValidateBasic() bool {
 	return true
 }
 
+// Bytes serializes the proof into a fixed-size array of byte slices.
 func (pf *ProofMod) Bytes() [ProofModBytesParts][]byte {
 	bzs := [ProofModBytesParts][]byte{}
 	bzs[0] = pf.W.Bytes()

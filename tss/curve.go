@@ -15,11 +15,14 @@ import (
 	"github.com/ModChain/secp256k1"
 )
 
+// CurveName is a string identifier for an elliptic curve used in TSS operations.
 type CurveName string
 
 const (
+	// Secp256k1 is the curve name for the secp256k1 elliptic curve.
 	Secp256k1 CurveName = "secp256k1"
-	Ed25519   CurveName = "ed25519"
+	// Ed25519 is the curve name for the Ed25519 twisted Edwards curve.
+	Ed25519 CurveName = "ed25519"
 )
 
 var (
@@ -36,6 +39,7 @@ func init() {
 	registry[Ed25519] = edwards25519.Edwards()
 }
 
+// RegisterCurve registers an elliptic curve under the given name in the global curve registry.
 func RegisterCurve(name CurveName, curve elliptic.Curve) {
 	registry[name] = curve
 }
@@ -85,11 +89,12 @@ func SetCurve(curve elliptic.Curve) {
 	ec = curve
 }
 
-// secp256k1
+// S256 returns the secp256k1 elliptic curve.
 func S256() elliptic.Curve {
 	return secp256k1.S256()
 }
 
+// Edwards returns the Ed25519 twisted Edwards elliptic curve.
 func Edwards() elliptic.Curve {
 	return edwards25519.Edwards()
 }

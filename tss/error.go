@@ -19,22 +19,30 @@ type Error struct {
 	culprits []*PartyID
 }
 
+// NewError creates a new Error with the given cause, task name, round number, victim, and optional culprits.
 func NewError(err error, task string, round int, victim *PartyID, culprits ...*PartyID) *Error {
 	return &Error{cause: err, task: task, round: round, victim: victim, culprits: culprits}
 }
 
+// Unwrap returns the underlying cause of the error, implementing the errors.Unwrap interface.
 func (err *Error) Unwrap() error { return err.cause }
 
+// Cause returns the underlying error that caused this Error.
 func (err *Error) Cause() error { return err.cause }
 
+// Task returns the name of the task during which the error occurred.
 func (err *Error) Task() string { return err.task }
 
+// Round returns the round number during which the error occurred.
 func (err *Error) Round() int { return err.round }
 
+// Victim returns the PartyID of the party that encountered the error.
 func (err *Error) Victim() *PartyID { return err.victim }
 
+// Culprits returns the list of party IDs responsible for causing the error.
 func (err *Error) Culprits() []*PartyID { return err.culprits }
 
+// Error returns a formatted string representation of the error including task, round, and culprit details.
 func (err *Error) Error() string {
 	if err == nil || err.cause == nil {
 		return "Error is nil"

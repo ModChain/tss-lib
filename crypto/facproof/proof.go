@@ -17,10 +17,12 @@ import (
 )
 
 const (
+	// ProofFacBytesParts is the number of byte parts in a serialized ProofFac.
 	ProofFacBytesParts = 11
 )
 
 type (
+	// ProofFac is a zero-knowledge proof that a Paillier modulus N0 is the product of two primes.
 	ProofFac struct {
 		P, Q, A, B, T, Sigma, Z1, Z2, W1, W2, V *big.Int
 	}
@@ -103,6 +105,7 @@ func NewProof(Session []byte, ec elliptic.Curve, N0, NCap, s, t, N0p, N0q *big.I
 	return &ProofFac{P: P, Q: Q, A: A, B: B, T: T, Sigma: sigma, Z1: z1, Z2: z2, W1: w1, W2: w2, V: v}, nil
 }
 
+// NewProofFromBytes reconstructs a ProofFac from a slice of byte slices.
 func NewProofFromBytes(bzs [][]byte) (*ProofFac, error) {
 	if !common.NonEmptyMultiBytes(bzs, ProofFacBytesParts) {
 		return nil, fmt.Errorf("expected %d byte parts to construct ProofFac", ProofFacBytesParts)
@@ -122,6 +125,7 @@ func NewProofFromBytes(bzs [][]byte) (*ProofFac, error) {
 	}, nil
 }
 
+// Verify checks whether the factorization proof is valid for the given parameters.
 func (pf *ProofFac) Verify(Session []byte, ec elliptic.Curve, N0, NCap, s, t *big.Int) bool {
 	if pf == nil || !pf.ValidateBasic() || ec == nil || N0 == nil || NCap == nil || s == nil || t == nil {
 		return false
@@ -184,6 +188,7 @@ func (pf *ProofFac) Verify(Session []byte, ec elliptic.Curve, N0, NCap, s, t *bi
 	return true
 }
 
+// ValidateBasic checks that all fields of the proof are non-nil.
 func (pf *ProofFac) ValidateBasic() bool {
 	return pf.P != nil &&
 		pf.Q != nil &&
@@ -198,6 +203,7 @@ func (pf *ProofFac) ValidateBasic() bool {
 		pf.V != nil
 }
 
+// Bytes serializes the proof into a fixed-size array of byte slices.
 func (pf *ProofFac) Bytes() [ProofFacBytesParts][]byte {
 	return [...][]byte{
 		pf.P.Bytes(),

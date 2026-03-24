@@ -14,6 +14,7 @@ import (
 	"github.com/ModChain/tss-lib/v2/common"
 )
 
+// GenerateNTildei computes NTilde = p*q from two safe primes and returns NTilde along with two random generators of the quadratic residue group.
 func GenerateNTildei(rand io.Reader, safePrimes [2]*big.Int) (NTildei, h1i, h2i *big.Int, err error) {
 	if safePrimes[0] == nil || safePrimes[1] == nil {
 		return nil, nil, nil, fmt.Errorf("GenerateNTildei: needs two primes, got %v", safePrimes)

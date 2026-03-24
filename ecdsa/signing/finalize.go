@@ -99,11 +99,10 @@ func (round *finalization) NextRound() tss.Round {
 }
 
 func padToLengthBytesInPlace(src []byte, length int) []byte {
-	oriLen := len(src)
-	if oriLen < length {
-		for i := 0; i < length-oriLen; i++ {
-			src = append([]byte{0}, src...)
-		}
+	if len(src) >= length {
+		return src
 	}
-	return src
+	padded := make([]byte, length)
+	copy(padded[length-len(src):], src)
+	return padded
 }

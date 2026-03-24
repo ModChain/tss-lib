@@ -20,9 +20,11 @@ import (
 	cmts "github.com/ModChain/tss-lib/v2/crypto/commitments"
 )
 
+// Iterations is the number of iterations used in the DLN proof for soundness.
 const Iterations = 128
 
 type (
+	// Proof is a zero-knowledge proof of knowledge of the discrete logarithm over a safe prime product.
 	Proof struct {
 		Alpha,
 		T [Iterations]*big.Int
@@ -31,6 +33,7 @@ type (
 
 var one = big.NewInt(1)
 
+// NewDLNProof creates a new DLN proof that h2 = h1^x mod N given the factorization N = p*q.
 func NewDLNProof(h1, h2, x, p, q, N *big.Int, rand io.Reader) *Proof {
 	pMulQ := new(big.Int).Mul(p, q)
 	modN, modPQ := common.ModInt(N), common.ModInt(pMulQ)
@@ -52,6 +55,7 @@ func NewDLNProof(h1, h2, x, p, q, N *big.Int, rand io.Reader) *Proof {
 	return &Proof{alpha, t}
 }
 
+// Verify checks whether the DLN proof is valid for the given h1, h2, and modulus N.
 func (p *Proof) Verify(h1, h2, N *big.Int) bool {
 	if p == nil {
 		return false
@@ -102,6 +106,7 @@ func (p *Proof) Verify(h1, h2, N *big.Int) bool {
 	return true
 }
 
+// Serialize encodes the proof into a slice of byte slices for transmission.
 func (p *Proof) Serialize() ([][]byte, error) {
 	cb := cmts.NewBuilder()
 	cb = cb.AddPart(p.Alpha[:])
@@ -121,6 +126,7 @@ func (p *Proof) Serialize() ([][]byte, error) {
 	return bzs, nil
 }
 
+// UnmarshalDLNProof reconstructs a DLN Proof from a slice of byte slices.
 func UnmarshalDLNProof(bzs [][]byte) (*Proof, error) {
 	bis := make([]*big.Int, len(bzs))
 	for i := range bis {

@@ -54,6 +54,7 @@ func SHA512_256(in ...[]byte) []byte {
 	return state.Sum(nil)
 }
 
+// SHA512_256i computes the SHA-512/256 hash of the given big.Int values and returns the result as a big.Int.
 func SHA512_256i(in ...*big.Int) *big.Int {
 	var data []byte
 	state := sha512.New512_256()
@@ -142,6 +143,7 @@ func SHA512_256i_TAGGED(tag []byte, in ...*big.Int) *big.Int {
 	return new(big.Int).SetBytes(state.Sum(nil))
 }
 
+// SHA512_256iOne computes the SHA-512/256 hash of a single big.Int and returns the result as a big.Int.
 func SHA512_256iOne(in *big.Int) *big.Int {
 	var data []byte
 	state := sha512.New512_256()

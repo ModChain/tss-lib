@@ -10,6 +10,7 @@ import (
 	"math/big"
 )
 
+// BigIntsToBytes converts a slice of big.Int values to a slice of byte slices.
 func BigIntsToBytes(bigInts []*big.Int) [][]byte {
 	bzs := make([][]byte, len(bigInts))
 	for i := range bzs {
@@ -21,6 +22,7 @@ func BigIntsToBytes(bigInts []*big.Int) [][]byte {
 	return bzs
 }
 
+// MultiBytesToBigInts converts a slice of byte slices to a slice of big.Int values.
 func MultiBytesToBigInts(bytes [][]byte) []*big.Int {
 	ints := make([]*big.Int, len(bytes))
 	for i := range ints {

@@ -102,6 +102,7 @@ func NewMessageWrapper(routing MessageRouting, content MessageContent) *MessageW
 
 // ----- //
 
+// NewMessage creates a new ParsedMessage from the given routing metadata, content, and wire wrapper.
 func NewMessage(meta MessageRouting, content MessageContent, wire *MessageWrapper) ParsedMessage {
 	return &MessageImpl{
 		MessageRouting: meta,
@@ -110,18 +111,22 @@ func NewMessage(meta MessageRouting, content MessageContent, wire *MessageWrappe
 	}
 }
 
+// Type returns the protobuf message type name of the inner content.
 func (mm *MessageImpl) Type() string {
 	return string(proto.MessageName(mm.content))
 }
 
+// GetTo returns the list of destination party IDs for this message, or nil for broadcast.
 func (mm *MessageImpl) GetTo() []*PartyID {
 	return mm.To
 }
 
+// GetFrom returns the PartyID of the sender of this message.
 func (mm *MessageImpl) GetFrom() *PartyID {
 	return mm.From
 }
 
+// IsBroadcast returns true if this message should be broadcast to all parties.
 func (mm *MessageImpl) IsBroadcast() bool {
 	return mm.wire.IsBroadcast
 }
@@ -136,6 +141,7 @@ func (mm *MessageImpl) IsToOldAndNewCommittees() bool {
 	return mm.wire.IsToOldAndNewCommittees
 }
 
+// WireBytes returns the marshaled inner message bytes and routing metadata for wire transmission.
 func (mm *MessageImpl) WireBytes() ([]byte, *MessageRouting, error) {
 	bz, err := proto.Marshal(mm.wire.Message)
 	if err != nil {
@@ -144,18 +150,22 @@ func (mm *MessageImpl) WireBytes() ([]byte, *MessageRouting, error) {
 	return bz, &mm.MessageRouting, nil
 }
 
+// WireMsg returns the protobuf MessageWrapper struct for this message.
 func (mm *MessageImpl) WireMsg() *MessageWrapper {
 	return mm.wire
 }
 
+// Content returns the inner protobuf MessageContent of this message.
 func (mm *MessageImpl) Content() MessageContent {
 	return mm.content
 }
 
+// ValidateBasic validates the inner message content.
 func (mm *MessageImpl) ValidateBasic() bool {
 	return mm.content.ValidateBasic()
 }
 
+// String returns a human-readable representation of the message including type, sender, and recipients.
 func (mm *MessageImpl) String() string {
 	toStr := "all"
 	if mm.To != nil {

@@ -14,6 +14,7 @@ import (
 	"github.com/ModChain/tss-lib/v2/ecdsa/keygen"
 )
 
+// UpdatePublicKeyAndAdjustBigXj updates the ECDSA public key and adjusts each party's BigXj by the key derivation delta for HD wallet support.
 func UpdatePublicKeyAndAdjustBigXj(keyDerivationDelta *big.Int, keys []keygen.LocalPartySaveData, extendedChildPk *ecdsa.PublicKey, ec elliptic.Curve) error {
 	var err error
 	gDelta := crypto.ScalarBaseMult(ec, keyDerivationDelta)

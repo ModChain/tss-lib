@@ -30,15 +30,18 @@ import (
 )
 
 const (
+	// ProofIters is the number of iterations used in the Paillier key correctness proof.
 	ProofIters         = 13
 	pQBitLenDifference = 3 // >1020-bit P-Q
 )
 
 type (
+	// PublicKey represents a Paillier public key containing the modulus N.
 	PublicKey struct {
 		N *big.Int
 	}
 
+	// PrivateKey represents a Paillier private key containing the public key and the secret prime factors.
 	PrivateKey struct {
 		PublicKey
 		LambdaN, // lcm(p-1, q-1)
@@ -51,7 +54,9 @@ type (
 )
 
 var (
-	ErrMessageTooLong   = fmt.Errorf("the message is too large or < 0")
+	// ErrMessageTooLong is returned when the plaintext is negative or exceeds the modulus.
+	ErrMessageTooLong = fmt.Errorf("the message is too large or < 0")
+	// ErrMessageMalFormed is returned when the ciphertext is not coprime with N^2.
 	ErrMessageMalFormed = fmt.Errorf("the message is mal-formed")
 
 	zero = big.NewInt(0)
@@ -118,6 +123,7 @@ func GenerateKeyPair(ctx context.Context, rand io.Reader, modulusBitLen int, opt
 
 // ----- //
 
+// EncryptAndReturnRandomness encrypts the plaintext m and also returns the randomness used for the encryption.
 func (publicKey *PublicKey) EncryptAndReturnRandomness(rand io.Reader, m *big.Int) (c *big.Int, x *big.Int, err error) {
 	if m.Cmp(zero) == -1 || m.Cmp(publicKey.N) != -1 { // m < 0 || m >= N ?
 		return nil, nil, ErrMessageTooLong
@@ -133,11 +139,13 @@ func (publicKey *PublicKey) EncryptAndReturnRandomness(rand io.Reader, m *big.In
 	return
 }
 
+// Encrypt encrypts the plaintext m under the Paillier public key and returns the ciphertext.
 func (publicKey *PublicKey) Encrypt(rand io.Reader, m *big.Int) (c *big.Int, err error) {
 	c, _, err = publicKey.EncryptAndReturnRandomness(rand, m)
 	return
 }
 
+// HomoMult homomorphically multiplies a ciphertext c1 by a plaintext scalar m, equivalent to encrypting m * plaintext(c1).
 func (publicKey *PublicKey) HomoMult(m, c1 *big.Int) (*big.Int, error) {
 	if m.Cmp(zero) == -1 || m.Cmp(publicKey.N) != -1 { // m < 0 || m >= N ?
 		return nil, ErrMessageTooLong
@@ -150,6 +158,7 @@ func (publicKey *PublicKey) HomoMult(m, c1 *big.Int) (*big.Int, error) {
 	return common.ModInt(N2).Exp(c1, m), nil
 }
 
+// HomoAdd homomorphically adds two ciphertexts, producing a ciphertext of the sum of the two plaintexts.
 func (publicKey *PublicKey) HomoAdd(c1, c2 *big.Int) (*big.Int, error) {
 	N2 := publicKey.NSquare()
 	if c1.Cmp(zero) == -1 || c1.Cmp(N2) != -1 { // c1 < 0 || c1 >= N2 ?
@@ -162,6 +171,7 @@ func (publicKey *PublicKey) HomoAdd(c1, c2 *big.Int) (*big.Int, error) {
 	return common.ModInt(N2).Mul(c1, c2), nil
 }
 
+// NSquare returns N^2, used as the modulus for ciphertext operations.
 func (publicKey *PublicKey) NSquare() *big.Int {
 	return new(big.Int).Mul(publicKey.N, publicKey.N)
 }
@@ -178,6 +188,7 @@ func (publicKey *PublicKey) Gamma() *big.Int {
 
 // ----- //
 
+// Decrypt decrypts the ciphertext c using the Paillier private key and returns the plaintext.
 func (privateKey *PrivateKey) Decrypt(c *big.Int) (m *big.Int, err error) {
 	N2 := privateKey.NSquare()
 	if c.Cmp(zero) == -1 || c.Cmp(N2) != -1 { // c < 0 || c >= N2 ?
@@ -220,6 +231,7 @@ func (privateKey *PrivateKey) Proof(k *big.Int, ecdsaPub *crypto2.ECPoint) (Proo
 	return pi, nil
 }
 
+// Verify checks whether the Paillier key correctness proof is valid for the given public key N.
 func (pf Proof) Verify(pkN, k *big.Int, ecdsaPub *crypto2.ECPoint) (bool, error) {
 	iters := ProofIters
 	pch, xch := make(chan bool, 1), make(chan []*big.Int, 1) // buffered to allow early exit
@@ -260,6 +272,7 @@ func (pf Proof) Verify(pkN, k *big.Int, ecdsaPub *crypto2.ECPoint) (bool, error)
 
 // ----- utils
 
+// L computes the Paillier L function: L(u) = (u - 1) / N.
 func L(u, N *big.Int) *big.Int {
 	t := new(big.Int).Sub(u, one)
 	return new(big.Int).Div(t, N)

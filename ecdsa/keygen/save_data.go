@@ -17,6 +17,7 @@ import (
 )
 
 type (
+	// LocalPreParams contains the pre-computed Paillier key and safe prime parameters for a party.
 	LocalPreParams struct {
 		PaillierSK *paillier.PrivateKey // ski
 		NTildei,
@@ -25,6 +26,7 @@ type (
 		P, Q *big.Int
 	}
 
+	// LocalSecrets holds the secret share data that is not shared with other parties.
 	LocalSecrets struct {
 		// secret fields (not shared, but stored locally)
 		Xi, ShareID *big.Int // xi, kj
@@ -50,6 +52,7 @@ type (
 	}
 )
 
+// NewLocalPartySaveData initializes a LocalPartySaveData with slices pre-allocated for the given party count.
 func NewLocalPartySaveData(partyCount int) (saveData LocalPartySaveData) {
 	saveData.Ks = make([]*big.Int, partyCount)
 	saveData.NTildej = make([]*big.Int, partyCount)
@@ -59,6 +62,7 @@ func NewLocalPartySaveData(partyCount int) (saveData LocalPartySaveData) {
 	return
 }
 
+// Validate returns true if the essential pre-parameters (Paillier key, NTilde, H1, H2) are non-nil.
 func (preParams LocalPreParams) Validate() bool {
 	return preParams.PaillierSK != nil &&
 		preParams.NTildei != nil &&
@@ -66,6 +70,7 @@ func (preParams LocalPreParams) Validate() bool {
 		preParams.H2i != nil
 }
 
+// ValidateWithProof returns true if the pre-parameters and all proof-related fields (Alpha, Beta, P, Q) are non-nil.
 func (preParams LocalPreParams) ValidateWithProof() bool {
 	return preParams.Validate() &&
 		preParams.PaillierSK.P != nil &&

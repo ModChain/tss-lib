@@ -24,16 +24,20 @@ type (
 		Index int `json:"index"`
 	}
 
+	// UnSortedPartyIDs is an unsorted slice of PartyID pointers.
 	UnSortedPartyIDs []*PartyID
-	SortedPartyIDs   []*PartyID
+	// SortedPartyIDs is a slice of PartyID pointers sorted by key in ascending order.
+	SortedPartyIDs []*PartyID
 )
 
+// ValidateBasic returns true if the PartyID has a non-nil key and a non-negative index.
 func (pid *PartyID) ValidateBasic() bool {
 	return pid != nil && pid.Key != nil && 0 <= pid.Index
 }
 
 // --- ProtoBuf Extensions
 
+// KeyInt returns the key as a *big.Int.
 func (mpid *MessageWrapper_PartyID) KeyInt() *big.Int {
 	return new(big.Int).SetBytes(mpid.Key)
 }
@@ -53,6 +57,7 @@ func NewPartyID(id, moniker string, key *big.Int) *PartyID {
 	}
 }
 
+// String returns a human-readable representation of the PartyID including its index and moniker.
 func (pid PartyID) String() string {
 	return fmt.Sprintf("{%d,%s}", pid.Index, pid.Moniker)
 }
@@ -102,6 +107,7 @@ func GenerateTestPartyIDs(count int, startAt ...int) SortedPartyIDs {
 	return SortPartyIDs(ids, startAt...)
 }
 
+// Keys returns a slice of the keys for all party IDs in the sorted list.
 func (spids SortedPartyIDs) Keys() []*big.Int {
 	ids := make([]*big.Int, spids.Len())
 	for i, pid := range spids {
@@ -110,10 +116,12 @@ func (spids SortedPartyIDs) Keys() []*big.Int {
 	return ids
 }
 
+// ToUnSorted converts the SortedPartyIDs to an UnSortedPartyIDs type.
 func (spids SortedPartyIDs) ToUnSorted() UnSortedPartyIDs {
 	return UnSortedPartyIDs(spids)
 }
 
+// FindByKey returns the PartyID matching the given key, or nil if not found.
 func (spids SortedPartyIDs) FindByKey(key *big.Int) *PartyID {
 	for _, pid := range spids {
 		if pid.KeyInt().Cmp(key) == 0 {
@@ -123,6 +131,7 @@ func (spids SortedPartyIDs) FindByKey(key *big.Int) *PartyID {
 	return nil
 }
 
+// Exclude returns a new SortedPartyIDs with the specified party removed.
 func (spids SortedPartyIDs) Exclude(exclude *PartyID) SortedPartyIDs {
 	newSpIDs := make(SortedPartyIDs, 0, len(spids))
 	for _, pid := range spids {
@@ -136,14 +145,17 @@ func (spids SortedPartyIDs) Exclude(exclude *PartyID) SortedPartyIDs {
 
 // Sortable
 
+// Len returns the number of party IDs in the sorted list, implementing sort.Interface.
 func (spids SortedPartyIDs) Len() int {
 	return len(spids)
 }
 
+// Less reports whether the party at index a has a smaller key than the party at index b, implementing sort.Interface.
 func (spids SortedPartyIDs) Less(a, b int) bool {
-	return spids[a].KeyInt().Cmp(spids[b].KeyInt()) <= 0
+	return spids[a].KeyInt().Cmp(spids[b].KeyInt()) < 0
 }
 
+// Swap swaps the party IDs at the given indices, implementing sort.Interface.
 func (spids SortedPartyIDs) Swap(a, b int) {
 	spids[a], spids[b] = spids[b], spids[a]
 }

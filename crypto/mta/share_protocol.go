@@ -17,6 +17,7 @@ import (
 	"github.com/ModChain/tss-lib/v2/crypto/paillier"
 )
 
+// AliceInit encrypts Alice's secret and produces a range proof for the MtA protocol.
 func AliceInit(
 	ec elliptic.Curve,
 	pkA *paillier.PublicKey,
@@ -31,6 +32,7 @@ func AliceInit(
 	return cA, pf, err
 }
 
+// BobMid performs Bob's middle step in the MtA protocol without the consistency check.
 func BobMid(
 	Session []byte,
 	ec elliptic.Curve,
@@ -65,6 +67,7 @@ func BobMid(
 	return
 }
 
+// BobMidWC performs Bob's middle step in the MtA protocol with the consistency check (B = g^b).
 func BobMidWC(
 	Session []byte,
 	ec elliptic.Curve,
@@ -100,6 +103,7 @@ func BobMidWC(
 	return
 }
 
+// AliceEnd completes the MtA protocol for Alice by verifying Bob's proof and decrypting the result.
 func AliceEnd(
 	Session []byte,
 	ec elliptic.Curve,
@@ -119,6 +123,7 @@ func AliceEnd(
 	return new(big.Int).Mod(alphaPrm, q), nil
 }
 
+// AliceEndWC completes the MtA protocol for Alice with the consistency check by verifying Bob's proof and decrypting the result.
 func AliceEndWC(
 	Session []byte,
 	ec elliptic.Curve,

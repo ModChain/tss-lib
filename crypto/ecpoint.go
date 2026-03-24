@@ -47,19 +47,23 @@ func NewECPointNoCurveCheck(curve elliptic.Curve, X, Y *big.Int) *ECPoint {
 	return &ECPoint{curve, [2]*big.Int{X, Y}}
 }
 
+// X returns a copy of the point's X coordinate.
 func (p *ECPoint) X() *big.Int {
 	return new(big.Int).Set(p.coords[0])
 }
 
+// Y returns a copy of the point's Y coordinate.
 func (p *ECPoint) Y() *big.Int {
 	return new(big.Int).Set(p.coords[1])
 }
 
+// Add returns the sum of p and p1 on the elliptic curve.
 func (p *ECPoint) Add(p1 *ECPoint) (*ECPoint, error) {
 	x, y := p.curve.Add(p.X(), p.Y(), p1.X(), p1.Y())
 	return NewECPoint(p.curve, x, y)
 }
 
+// ScalarMult returns the result of multiplying the point by the scalar k.
 func (p *ECPoint) ScalarMult(k *big.Int) *ECPoint {
 	x, y := p.curve.ScalarMult(p.X(), p.Y(), k.Bytes())
 	newP, err := NewECPoint(p.curve, x, y) // it must be on the curve, no need to check.
@@ -69,6 +73,7 @@ func (p *ECPoint) ScalarMult(k *big.Int) *ECPoint {
 	return newP
 }
 
+// ToECDSAPubKey converts the ECPoint to a standard library ECDSA public key.
 func (p *ECPoint) ToECDSAPubKey() *ecdsa.PublicKey {
 	return &ecdsa.PublicKey{
 		Curve: p.curve,
@@ -102,14 +107,17 @@ func (p *ECPoint) ToSecp256k1PubKey() *secp256k1.PublicKey {
 	return secp256k1.NewPublicKey(x, y)
 }
 
+// IsOnCurve reports whether the point lies on its elliptic curve.
 func (p *ECPoint) IsOnCurve() bool {
 	return isOnCurve(p.curve, p.coords[0], p.coords[1])
 }
 
+// Curve returns the elliptic curve on which the point is defined.
 func (p *ECPoint) Curve() elliptic.Curve {
 	return p.curve
 }
 
+// Equals reports whether p and p2 represent the same point.
 func (p *ECPoint) Equals(p2 *ECPoint) bool {
 	if p == nil || p2 == nil {
 		return false
@@ -117,19 +125,23 @@ func (p *ECPoint) Equals(p2 *ECPoint) bool {
 	return p.X().Cmp(p2.X()) == 0 && p.Y().Cmp(p2.Y()) == 0
 }
 
+// SetCurve sets the curve of the point and returns the modified point.
 func (p *ECPoint) SetCurve(curve elliptic.Curve) *ECPoint {
 	p.curve = curve
 	return p
 }
 
+// ValidateBasic checks that the point is non-nil, has non-nil coordinates, and lies on its curve.
 func (p *ECPoint) ValidateBasic() bool {
 	return p != nil && p.coords[0] != nil && p.coords[1] != nil && p.IsOnCurve()
 }
 
+// EightInvEight multiplies the point by 8 and then by the modular inverse of 8 (used for cofactor clearing on Ed25519).
 func (p *ECPoint) EightInvEight() *ECPoint {
 	return p.ScalarMult(eight).ScalarMult(eightInv)
 }
 
+// ScalarBaseMult returns k*G where G is the base point of the given curve.
 func ScalarBaseMult(curve elliptic.Curve, k *big.Int) *ECPoint {
 	x, y := curve.ScalarBaseMult(k.Bytes())
 	p, err := NewECPoint(curve, x, y) // it must be on the curve, no need to check.
@@ -148,6 +160,7 @@ func isOnCurve(c elliptic.Curve, x, y *big.Int) bool {
 
 // ----- //
 
+// FlattenECPoints serializes a slice of ECPoints into a flat slice of big.Int coordinates (x1, y1, x2, y2, ...).
 func FlattenECPoints(in []*ECPoint) ([]*big.Int, error) {
 	if in == nil {
 		return nil, errors.New("FlattenECPoints encountered a nil in slice")
@@ -163,6 +176,7 @@ func FlattenECPoints(in []*ECPoint) ([]*big.Int, error) {
 	return flat, nil
 }
 
+// UnFlattenECPoints reconstructs a slice of ECPoints from a flat slice of big.Int coordinate pairs.
 func UnFlattenECPoints(curve elliptic.Curve, in []*big.Int, noCurveCheck ...bool) ([]*ECPoint, error) {
 	if in == nil || len(in)%2 != 0 {
 		return nil, errors.New("UnFlattenECPoints expected an in len divisible by 2")
@@ -190,6 +204,7 @@ func UnFlattenECPoints(curve elliptic.Curve, in []*big.Int, noCurveCheck ...bool
 // ----- //
 // Gob helpers for if you choose to encode messages with Gob.
 
+// GobEncode implements the gob.GobEncoder interface for ECPoint.
 func (p *ECPoint) GobEncode() ([]byte, error) {
 	buf := &bytes.Buffer{}
 	x, err := p.coords[0].GobEncode()
@@ -215,6 +230,7 @@ func (p *ECPoint) GobEncode() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// GobDecode implements the gob.GobDecoder interface for ECPoint.
 func (p *ECPoint) GobDecode(buf []byte) error {
 	reader := bytes.NewReader(buf)
 	var length uint32
@@ -269,6 +285,7 @@ func (p *ECPoint) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// UnmarshalJSON implements the json.Unmarshaler interface for ECPoint.
 func (p *ECPoint) UnmarshalJSON(payload []byte) error {
 	aux := &struct {
 		Curve  string

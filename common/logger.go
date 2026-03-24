@@ -10,4 +10,5 @@ import (
 	"github.com/ipfs/go-log"
 )
 
+// Logger is the package-level logger for tss-lib.
 var Logger = log.Logger("tss-lib")

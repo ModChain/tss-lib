@@ -16,11 +16,13 @@ import (
 )
 
 type (
+	// ZKProof is a Schnorr zero-knowledge proof of knowledge of the discrete logarithm.
 	ZKProof struct {
 		Alpha *crypto.ECPoint
 		T     *big.Int
 	}
 
+	// ZKVProof is a Schnorr zero-knowledge proof of knowledge of s and l such that V = R^s * g^l.
 	ZKVProof struct {
 		Alpha *crypto.ECPoint
 		T, U  *big.Int
@@ -75,6 +77,7 @@ func (pf *ZKProof) Verify(Session []byte, X *crypto.ECPoint) bool {
 	return aXc.X().Cmp(tG.X()) == 0 && aXc.Y().Cmp(tG.Y()) == 0
 }
 
+// ValidateBasic checks that all fields of the ZKProof are non-nil.
 func (pf *ZKProof) ValidateBasic() bool {
 	return pf.T != nil && pf.Alpha != nil
 }
@@ -106,6 +109,7 @@ func NewZKVProof(Session []byte, V, R *crypto.ECPoint, s, l *big.Int, rand io.Re
 	return &ZKVProof{Alpha: alpha, T: t, U: u}, nil
 }
 
+// Verify checks whether the ZKVProof is valid for the given V and R points.
 func (pf *ZKVProof) Verify(Session []byte, V, R *crypto.ECPoint) bool {
 	if pf == nil || !pf.ValidateBasic() || V == nil || !V.ValidateBasic() || R == nil || !R.ValidateBasic() {
 		return false
@@ -132,6 +136,7 @@ func (pf *ZKVProof) Verify(Session []byte, V, R *crypto.ECPoint) bool {
 	return tRuG.X().Cmp(aVc.X()) == 0 && tRuG.Y().Cmp(aVc.Y()) == 0
 }
 
+// ValidateBasic checks that all fields of the ZKVProof are non-nil and that Alpha is a valid point.
 func (pf *ZKVProof) ValidateBasic() bool {
 	return pf.Alpha != nil && pf.T != nil && pf.U != nil && pf.Alpha.ValidateBasic()
 }

@@ -34,6 +34,7 @@ func MustGetRandomInt(rand io.Reader, bits int) *big.Int {
 	return n
 }
 
+// GetRandomPositiveInt returns a random positive integer less than the given upper bound.
 func GetRandomPositiveInt(rand io.Reader, lessThan *big.Int) *big.Int {
 	if lessThan == nil || zero.Cmp(lessThan) != -1 {
 		return nil
@@ -48,6 +49,7 @@ func GetRandomPositiveInt(rand io.Reader, lessThan *big.Int) *big.Int {
 	return try
 }
 
+// GetRandomPrimeInt returns a random prime number of the specified bit length.
 func GetRandomPrimeInt(rand io.Reader, bits int) *big.Int {
 	if bits <= 0 {
 		return nil
@@ -82,6 +84,7 @@ func GetRandomPositiveRelativelyPrimeInt(rand io.Reader, n *big.Int) *big.Int {
 	return try
 }
 
+// IsNumberInMultiplicativeGroup returns true if v is in the multiplicative group of integers modulo n.
 func IsNumberInMultiplicativeGroup(n, v *big.Int) bool {
 	if n == nil || v == nil || zero.Cmp(n) != -1 {
 		return false

@@ -20,15 +20,19 @@ import (
 )
 
 const (
-	ProofBobBytesParts   = 10
+	// ProofBobBytesParts is the number of byte parts in a serialized ProofBob.
+	ProofBobBytesParts = 10
+	// ProofBobWCBytesParts is the number of byte parts in a serialized ProofBobWC.
 	ProofBobWCBytesParts = 12
 )
 
 type (
+	// ProofBob is Bob's zero-knowledge proof used in the MtA protocol without the consistency check.
 	ProofBob struct {
 		Z, ZPrm, T, V, W, S, S1, S2, T1, T2 *big.Int
 	}
 
+	// ProofBobWC is Bob's zero-knowledge proof used in the MtA protocol with the consistency check (X = g^x).
 	ProofBobWC struct {
 		*ProofBob
 		U *crypto.ECPoint
@@ -150,6 +154,7 @@ func ProveBob(Session []byte, ec elliptic.Curve, pk *paillier.PublicKey, NTilde,
 	return pf.ProofBob, nil
 }
 
+// ProofBobWCFromBytes reconstructs a ProofBobWC from a slice of byte slices and the elliptic curve.
 func ProofBobWCFromBytes(ec elliptic.Curve, bzs [][]byte) (*ProofBobWC, error) {
 	proofBob, err := ProofBobFromBytes(bzs)
 	if err != nil {
@@ -167,6 +172,7 @@ func ProofBobWCFromBytes(ec elliptic.Curve, bzs [][]byte) (*ProofBobWC, error) {
 	}, nil
 }
 
+// ProofBobFromBytes reconstructs a ProofBob from a slice of byte slices.
 func ProofBobFromBytes(bzs [][]byte) (*ProofBob, error) {
 	if !common.NonEmptyMultiBytes(bzs, ProofBobBytesParts) &&
 		!common.NonEmptyMultiBytes(bzs, ProofBobWCBytesParts) {
@@ -349,6 +355,7 @@ func (pf *ProofBob) Verify(Session []byte, ec elliptic.Curve, pk *paillier.Publi
 	return pfWC.Verify(Session, ec, pk, NTilde, h1, h2, c1, c2, nil)
 }
 
+// ValidateBasic checks that all fields of the ProofBob are non-nil.
 func (pf *ProofBob) ValidateBasic() bool {
 	return pf.Z != nil &&
 		pf.ZPrm != nil &&
@@ -362,10 +369,12 @@ func (pf *ProofBob) ValidateBasic() bool {
 		pf.T2 != nil
 }
 
+// ValidateBasic checks that all fields of the ProofBobWC are non-nil, including the embedded ProofBob.
 func (pf *ProofBobWC) ValidateBasic() bool {
 	return pf.ProofBob.ValidateBasic() && pf.U != nil
 }
 
+// Bytes serializes the ProofBob into a fixed-size array of byte slices.
 func (pf *ProofBob) Bytes() [ProofBobBytesParts][]byte {
 	return [...][]byte{
 		pf.Z.Bytes(),
@@ -381,6 +390,7 @@ func (pf *ProofBob) Bytes() [ProofBobBytesParts][]byte {
 	}
 }
 
+// Bytes serializes the ProofBobWC into a fixed-size array of byte slices including the ECPoint U.
 func (pf *ProofBobWC) Bytes() [ProofBobWCBytesParts][]byte {
 	var out [ProofBobWCBytesParts][]byte
 	bobBzs := pf.ProofBob.Bytes()

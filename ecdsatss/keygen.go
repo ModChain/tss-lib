@@ -30,6 +30,7 @@ type Keygen struct {
 	Receiver tss.MessageReceiver
 }
 
+// NewKeygen creates a new Keygen instance and executes round 1 of the key generation protocol.
 func NewKeygen(params *tss.Parameters) (*Keygen, error) {
 	partyCount := params.PartyCount()
 	res := &Keygen{

@@ -24,6 +24,7 @@ const (
 	SafeBitLen = 1024
 )
 
+// LocalPreGenerator configures and generates pre-parameters for the ECDSA TSS protocol.
 type LocalPreGenerator struct {
 	context.Context           // Context used to stop generation if needed
 	Rand            io.Reader // reader used for random, defaults to rand.Reader if nil
@@ -65,6 +66,7 @@ func (g *LocalPreGenerator) getContext() context.Context {
 	return g
 }
 
+// Generate computes the Paillier key pair and safe primes required for the protocol.
 func (g *LocalPreGenerator) Generate() (*LocalPreParams, error) {
 	concurrency := g.getConcurrency()
 

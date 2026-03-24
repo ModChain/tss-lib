@@ -6,6 +6,7 @@
 
 package tss
 
+// Round defines the interface for a single round of the TSS protocol.
 type Round interface {
 	Params() *Parameters
 	Start() error

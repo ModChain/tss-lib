@@ -22,6 +22,7 @@ import (
 	"golang.org/x/crypto/ripemd160"
 )
 
+// ExtendedKey represents a BIP-32 extended public key used for hierarchical deterministic key derivation.
 type ExtendedKey struct {
 	ecdsa.PublicKey
 	Depth      uint8
@@ -44,6 +45,7 @@ const (
 	// max Depth
 	maxDepth = 1<<8 - 1
 
+	// PubKeyBytesLenCompressed is the length in bytes of a compressed public key.
 	PubKeyBytesLenCompressed = 33
 
 	pubKeyCompressed byte = 0x2
@@ -185,6 +187,7 @@ func serializeCompressed(publicKeyX *big.Int, publicKeyY *big.Int) []byte {
 	return paddedAppend(b, 32, publicKeyX.Bytes())
 }
 
+// DeriveChildKeyFromHierarchy derives a child key by walking through a hierarchy of BIP-32 indices and accumulating the IL values.
 func DeriveChildKeyFromHierarchy(indicesHierarchy []uint32, pk *ExtendedKey, mod *big.Int, curve elliptic.Curve) (*big.Int, *ExtendedKey, error) {
 	var k = pk
 	var err error

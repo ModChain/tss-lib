@@ -28,6 +28,7 @@ var (
 )
 
 type (
+	// LocalParty represents a local participant in the ECDSA signing protocol.
 	LocalParty struct {
 		*tss.BaseParty
 		params *tss.Parameters
@@ -101,6 +102,7 @@ type (
 	}
 )
 
+// NewLocalParty creates a new signing party for the given message and keygen data.
 func NewLocalParty(
 	msg *big.Int,
 	params *tss.Parameters,
@@ -209,10 +211,12 @@ func NewLocalPartyWithKDD(
 	return p
 }
 
+// FirstRound returns the first round of the ECDSA signing protocol.
 func (p *LocalParty) FirstRound() tss.Round {
 	return newRound1(p.params, &p.keys, p.data, &p.temp, p.out, p.end)
 }
 
+// Start begins the signing protocol for this party.
 func (p *LocalParty) Start() error {
 	return tss.BaseStart(p, TaskName, func(round tss.Round) error {
 		round1, ok := round.(*round1)
@@ -226,10 +230,12 @@ func (p *LocalParty) Start() error {
 	})
 }
 
+// Update processes a parsed protocol message for this party.
 func (p *LocalParty) Update(msg tss.ParsedMessage) (ok bool, err error) {
 	return tss.BaseUpdate(p, msg, TaskName)
 }
 
+// UpdateFromBytes parses raw wire bytes into a message and updates this party.
 func (p *LocalParty) UpdateFromBytes(wireBytes []byte, from *tss.PartyID, isBroadcast bool) (bool, error) {
 	msg, err := tss.ParseWireMessage(wireBytes, from, isBroadcast)
 	if err != nil {
@@ -238,6 +244,7 @@ func (p *LocalParty) UpdateFromBytes(wireBytes []byte, from *tss.PartyID, isBroa
 	return p.Update(msg)
 }
 
+// ValidateMessage checks that the given message is well-formed and from a valid sender index.
 func (p *LocalParty) ValidateMessage(msg tss.ParsedMessage) (bool, error) {
 	if ok, err := p.BaseParty.ValidateMessage(msg); !ok || err != nil {
 		return ok, err
@@ -250,6 +257,7 @@ func (p *LocalParty) ValidateMessage(msg tss.ParsedMessage) (bool, error) {
 	return true, nil
 }
 
+// StoreMessage validates and stores a protocol message in the appropriate round message slot.
 func (p *LocalParty) StoreMessage(msg tss.ParsedMessage) (bool, error) {
 	// ValidateBasic is cheap; double-check the message here in case the public StoreMessage was called externally
 	if ok, err := p.ValidateMessage(msg); !ok || err != nil {
@@ -287,10 +295,12 @@ func (p *LocalParty) StoreMessage(msg tss.ParsedMessage) (bool, error) {
 	return true, nil
 }
 
+// PartyID returns the party's unique identifier.
 func (p *LocalParty) PartyID() *tss.PartyID {
 	return p.params.PartyID()
 }
 
+// String returns a human-readable representation of this party.
 func (p *LocalParty) String() string {
 	return fmt.Sprintf("id: %s, %s", p.PartyID(), p.BaseParty.String())
 }

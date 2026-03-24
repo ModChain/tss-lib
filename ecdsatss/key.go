@@ -21,16 +21,19 @@ type Key struct {
 	ECDSAPub *crypto.ECPoint // y
 }
 
+// LocalPreParams contains the pre-computed Paillier key and safe prime parameters for a party.
 type LocalPreParams struct {
 	PaillierSK                           *paillier.PrivateKey // ski
 	NTildei, H1i, H2i, Alpha, Beta, P, Q *big.Int
 }
 
+// LocalSecrets holds the secret share data that is not shared with other parties.
 type LocalSecrets struct {
 	// secret fields (not shared, but stored locally)
 	Xi, ShareID *big.Int // xi, kj
 }
 
+// Validate returns true if the essential pre-parameters (Paillier key, NTilde, H1, H2) are non-nil.
 func (preParams LocalPreParams) Validate() bool {
 	return preParams.PaillierSK != nil &&
 		preParams.NTildei != nil &&
@@ -38,6 +41,7 @@ func (preParams LocalPreParams) Validate() bool {
 		preParams.H2i != nil
 }
 
+// ValidateWithProof returns true if the pre-parameters and all proof-related fields (Alpha, Beta, P, Q) are non-nil.
 func (preParams LocalPreParams) ValidateWithProof() bool {
 	return preParams.Validate() &&
 		preParams.PaillierSK.P != nil &&

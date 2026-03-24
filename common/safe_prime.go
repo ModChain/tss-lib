@@ -21,20 +21,24 @@ const (
 )
 
 type (
+	// GermainSafePrime holds a Sophie Germain prime q and its associated safe prime p = 2q + 1.
 	GermainSafePrime struct {
 		q,
 		p *big.Int // p = 2q + 1
 	}
 )
 
+// Prime returns the Sophie Germain prime q.
 func (sgp *GermainSafePrime) Prime() *big.Int {
 	return sgp.q
 }
 
+// SafePrime returns the safe prime p = 2q + 1.
 func (sgp *GermainSafePrime) SafePrime() *big.Int {
 	return sgp.p
 }
 
+// Validate returns true if both q and p = 2q + 1 are prime.
 func (sgp *GermainSafePrime) Validate() bool {
 	return probablyPrime(sgp.q) &&
 		getSafePrime(sgp.q).Cmp(sgp.p) == 0 &&

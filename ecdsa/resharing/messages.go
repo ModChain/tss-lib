@@ -38,6 +38,7 @@ var (
 
 // ----- //
 
+// NewDGRound1Message creates a broadcast message for resharing round 1 containing the ECDSA public key, commitment, and SSID.
 func NewDGRound1Message(
 	to []*tss.PartyID,
 	from *tss.PartyID,
@@ -61,6 +62,7 @@ func NewDGRound1Message(
 	return tss.NewMessage(meta, content, msg)
 }
 
+// ValidateBasic checks that all required fields in the resharing round 1 message are non-empty.
 func (m *DGRound1Message) ValidateBasic() bool {
 	return m != nil &&
 		common.NonEmptyBytes(m.EcdsaPubX) &&
@@ -68,6 +70,7 @@ func (m *DGRound1Message) ValidateBasic() bool {
 		common.NonEmptyBytes(m.VCommitment)
 }
 
+// UnmarshalECDSAPub deserializes the ECDSA public key from the message.
 func (m *DGRound1Message) UnmarshalECDSAPub(ec elliptic.Curve) (*crypto.ECPoint, error) {
 	return crypto.NewECPoint(
 		ec,
@@ -75,16 +78,19 @@ func (m *DGRound1Message) UnmarshalECDSAPub(ec elliptic.Curve) (*crypto.ECPoint,
 		new(big.Int).SetBytes(m.EcdsaPubY))
 }
 
+// UnmarshalVCommitment deserializes the VSS commitment from the message.
 func (m *DGRound1Message) UnmarshalVCommitment() *big.Int {
 	return new(big.Int).SetBytes(m.GetVCommitment())
 }
 
+// UnmarshalSSID deserializes the session identifier from the message.
 func (m *DGRound1Message) UnmarshalSSID() []byte {
 	return m.GetSsid()
 }
 
 // ----- //
 
+// NewDGRound2Message1 creates a broadcast message for resharing round 2 containing the Paillier key, modulus proof, and DLN proofs.
 func NewDGRound2Message1(
 	to []*tss.PartyID,
 	from *tss.PartyID,
@@ -121,6 +127,7 @@ func NewDGRound2Message1(
 	return tss.NewMessage(meta, content, msg), nil
 }
 
+// ValidateBasic checks that all required fields in the resharing round 2 message 1 are non-empty.
 func (m *DGRound2Message1) ValidateBasic() bool {
 	return m != nil &&
 		// use with NoProofFac()
@@ -134,38 +141,46 @@ func (m *DGRound2Message1) ValidateBasic() bool {
 		common.NonEmptyMultiBytes(m.GetDlnproof_2(), 2+(dlnproof.Iterations*2))
 }
 
+// UnmarshalPaillierPK deserializes the Paillier public key from the message.
 func (m *DGRound2Message1) UnmarshalPaillierPK() *paillier.PublicKey {
 	return &paillier.PublicKey{
 		N: new(big.Int).SetBytes(m.PaillierN),
 	}
 }
 
+// UnmarshalNTilde deserializes the NTilde value from the message.
 func (m *DGRound2Message1) UnmarshalNTilde() *big.Int {
 	return new(big.Int).SetBytes(m.GetNTilde())
 }
 
+// UnmarshalH1 deserializes the H1 value from the message.
 func (m *DGRound2Message1) UnmarshalH1() *big.Int {
 	return new(big.Int).SetBytes(m.GetH1())
 }
 
+// UnmarshalH2 deserializes the H2 value from the message.
 func (m *DGRound2Message1) UnmarshalH2() *big.Int {
 	return new(big.Int).SetBytes(m.GetH2())
 }
 
+// UnmarshalModProof deserializes the modulus proof from the message.
 func (m *DGRound2Message1) UnmarshalModProof() (*modproof.ProofMod, error) {
 	return modproof.NewProofFromBytes(m.GetModProof())
 }
 
+// UnmarshalDLNProof1 deserializes the first DLN proof from the message.
 func (m *DGRound2Message1) UnmarshalDLNProof1() (*dlnproof.Proof, error) {
 	return dlnproof.UnmarshalDLNProof(m.GetDlnproof_1())
 }
 
+// UnmarshalDLNProof2 deserializes the second DLN proof from the message.
 func (m *DGRound2Message1) UnmarshalDLNProof2() (*dlnproof.Proof, error) {
 	return dlnproof.UnmarshalDLNProof(m.GetDlnproof_2())
 }
 
 // ----- //
 
+// NewDGRound2Message2 creates a broadcast message from the new committee to the old committee signaling readiness.
 func NewDGRound2Message2(
 	to []*tss.PartyID,
 	from *tss.PartyID,
@@ -181,12 +196,14 @@ func NewDGRound2Message2(
 	return tss.NewMessage(meta, content, msg)
 }
 
+// ValidateBasic always returns true as this message carries no payload.
 func (m *DGRound2Message2) ValidateBasic() bool {
 	return true
 }
 
 // ----- //
 
+// NewDGRound3Message1 creates a point-to-point message for resharing round 3 containing a VSS share.
 func NewDGRound3Message1(
 	to *tss.PartyID,
 	from *tss.PartyID,
@@ -205,6 +222,7 @@ func NewDGRound3Message1(
 	return tss.NewMessage(meta, content, msg)
 }
 
+// ValidateBasic checks that the share field in the resharing round 3 message 1 is non-empty.
 func (m *DGRound3Message1) ValidateBasic() bool {
 	return m != nil &&
 		common.NonEmptyBytes(m.Share)
@@ -212,6 +230,7 @@ func (m *DGRound3Message1) ValidateBasic() bool {
 
 // ----- //
 
+// NewDGRound3Message2 creates a broadcast message for resharing round 3 containing the VSS de-commitment.
 func NewDGRound3Message2(
 	to []*tss.PartyID,
 	from *tss.PartyID,
@@ -231,11 +250,13 @@ func NewDGRound3Message2(
 	return tss.NewMessage(meta, content, msg)
 }
 
+// ValidateBasic checks that the de-commitment field in the resharing round 3 message 2 is non-empty.
 func (m *DGRound3Message2) ValidateBasic() bool {
 	return m != nil &&
 		common.NonEmptyMultiBytes(m.VDecommitment)
 }
 
+// UnmarshalVDeCommitment deserializes the VSS de-commitment from the message.
 func (m *DGRound3Message2) UnmarshalVDeCommitment() cmt.HashDeCommitment {
 	deComBzs := m.GetVDecommitment()
 	return cmt.NewHashDeCommitmentFromBytes(deComBzs)
@@ -243,6 +264,7 @@ func (m *DGRound3Message2) UnmarshalVDeCommitment() cmt.HashDeCommitment {
 
 // ----- //
 
+// NewDGRound4Message2 creates a broadcast message for resharing round 4 sent to both old and new committees.
 func NewDGRound4Message2(
 	to []*tss.PartyID,
 	from *tss.PartyID,
@@ -258,10 +280,12 @@ func NewDGRound4Message2(
 	return tss.NewMessage(meta, content, msg)
 }
 
+// ValidateBasic always returns true as this message carries no payload.
 func (m *DGRound4Message2) ValidateBasic() bool {
 	return true
 }
 
+// NewDGRound4Message1 creates a point-to-point message for resharing round 4 containing the factorization proof.
 func NewDGRound4Message1(
 	to *tss.PartyID,
 	from *tss.PartyID,
@@ -281,12 +305,14 @@ func NewDGRound4Message1(
 	return tss.NewMessage(meta, content, msg)
 }
 
+// ValidateBasic checks that the round 4 message 1 is non-nil.
 func (m *DGRound4Message1) ValidateBasic() bool {
 	return m != nil
 	// use with NoProofFac()
 	// && common.NonEmptyMultiBytes(m.GetFacProof(), facproof.ProofFacBytesParts)
 }
 
+// UnmarshalFacProof deserializes the factorization proof from the message.
 func (m *DGRound4Message1) UnmarshalFacProof() (*facproof.ProofFac, error) {
 	return facproof.NewProofFromBytes(m.GetFacProof())
 }

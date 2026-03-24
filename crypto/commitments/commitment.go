@@ -17,19 +17,24 @@ import (
 )
 
 const (
+	// HashLength is the bit length used for generating commitment randomness.
 	HashLength = 256
 )
 
 type (
-	HashCommitment   = *big.Int
+	// HashCommitment is a hash-based commitment value.
+	HashCommitment = *big.Int
+	// HashDeCommitment holds the decommitment values including the randomness and secrets.
 	HashDeCommitment = []*big.Int
 
+	// HashCommitDecommit holds a paired commitment and decommitment for hash-based commitment schemes.
 	HashCommitDecommit struct {
 		C HashCommitment
 		D HashDeCommitment
 	}
 )
 
+// NewHashCommitmentWithRandomness creates a new hash commitment using the provided randomness value r and secrets.
 func NewHashCommitmentWithRandomness(r *big.Int, secrets ...*big.Int) *HashCommitDecommit {
 	parts := make([]*big.Int, len(secrets)+1)
 	parts[0] = r
@@ -44,15 +49,18 @@ func NewHashCommitmentWithRandomness(r *big.Int, secrets ...*big.Int) *HashCommi
 	return cmt
 }
 
+// NewHashCommitment creates a new hash commitment with a random nonce for the given secrets.
 func NewHashCommitment(rand io.Reader, secrets ...*big.Int) *HashCommitDecommit {
 	r := common.MustGetRandomInt(rand, HashLength) // r
 	return NewHashCommitmentWithRandomness(r, secrets...)
 }
 
+// NewHashDeCommitmentFromBytes reconstructs a HashDeCommitment from a slice of byte slices.
 func NewHashDeCommitmentFromBytes(marshalled [][]byte) HashDeCommitment {
 	return common.MultiBytesToBigInts(marshalled)
 }
 
+// Verify checks that the decommitment D hashes to the commitment C.
 func (cmt *HashCommitDecommit) Verify() bool {
 	C, D := cmt.C, cmt.D
 	if C == nil || D == nil {
@@ -62,6 +70,7 @@ func (cmt *HashCommitDecommit) Verify() bool {
 	return hash.Cmp(C) == 0
 }
 
+// DeCommit verifies the commitment and, if valid, returns the secret values (excluding the randomness).
 func (cmt *HashCommitDecommit) DeCommit() (bool, HashDeCommitment) {
 	if cmt.Verify() {
 		// [1:] skips random element r in D

@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	// RangeProofAliceBytesParts is the number of byte parts in a serialized RangeProofAlice.
 	RangeProofAliceBytesParts = 6
 )
 
@@ -27,6 +28,7 @@ var (
 )
 
 type (
+	// RangeProofAlice is Alice's range proof used in the MtA protocol to prove her secret is within a valid range.
 	RangeProofAlice struct {
 		Z, U, W, S, S1, S2 *big.Int
 	}
@@ -91,6 +93,7 @@ func ProveRangeAlice(ec elliptic.Curve, pk *paillier.PublicKey, c, NTilde, h1, h
 	return &RangeProofAlice{Z: z, U: u, W: w, S: s, S1: s1, S2: s2}, nil
 }
 
+// RangeProofAliceFromBytes reconstructs a RangeProofAlice from a slice of byte slices.
 func RangeProofAliceFromBytes(bzs [][]byte) (*RangeProofAlice, error) {
 	if !common.NonEmptyMultiBytes(bzs, RangeProofAliceBytesParts) {
 		return nil, fmt.Errorf("expected %d byte parts to construct RangeProofAlice", RangeProofAliceBytesParts)
@@ -105,6 +108,7 @@ func RangeProofAliceFromBytes(bzs [][]byte) (*RangeProofAlice, error) {
 	}, nil
 }
 
+// Verify checks whether Alice's range proof is valid for the given public parameters and ciphertext.
 func (pf *RangeProofAlice) Verify(ec elliptic.Curve, pk *paillier.PublicKey, NTilde, h1, h2, c *big.Int) bool {
 	if pf == nil || !pf.ValidateBasic() || pk == nil || NTilde == nil || h1 == nil || h2 == nil || c == nil {
 		return false
@@ -196,6 +200,7 @@ func (pf *RangeProofAlice) Verify(ec elliptic.Curve, pk *paillier.PublicKey, NTi
 	return true
 }
 
+// ValidateBasic checks that all fields of the RangeProofAlice are non-nil.
 func (pf *RangeProofAlice) ValidateBasic() bool {
 	return pf.Z != nil &&
 		pf.U != nil &&
@@ -205,6 +210,7 @@ func (pf *RangeProofAlice) ValidateBasic() bool {
 		pf.S2 != nil
 }
 
+// Bytes serializes the RangeProofAlice into a fixed-size array of byte slices.
 func (pf *RangeProofAlice) Bytes() [RangeProofAliceBytesParts][]byte {
 	return [...][]byte{
 		pf.Z.Bytes(),
