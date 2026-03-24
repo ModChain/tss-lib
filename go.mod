@@ -1,6 +1,6 @@
 module github.com/ModChain/tss-lib/v2
 
-go 1.22.2
+go 1.24.0
 
 require (
 	github.com/ModChain/base58 v1.0.0
@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ipfs/go-log v1.0.5
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/crypto v0.23.0
+	golang.org/x/crypto v0.45.0
 	google.golang.org/protobuf v1.33.0
 )
 
