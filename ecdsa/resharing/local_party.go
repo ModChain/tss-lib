@@ -66,9 +66,9 @@ type (
 )
 
 // Exported, used in `tss` client
-// The `key` is read from and/or written to depending on whether this party is part of the old or the new committee.
-// You may optionally generate and set the LocalPreParams if you would like to use pre-generated safe primes and Paillier secret.
-// (This is similar to providing the `optionalPreParams` to `keygen.LocalParty`).
+// Deprecated: Use ecdsatss.NewResharing instead, which provides a simpler broker-based API
+// without requiring channel setup or manual message routing.
+// See github.com/KarpelesLab/tss-lib/v2/ecdsatss for the replacement.
 func NewLocalParty(
 	params *tss.ReSharingParameters,
 	key keygen.LocalPartySaveData,

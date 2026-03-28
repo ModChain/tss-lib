@@ -30,6 +30,9 @@ const (
 	SafeBitLen = 1024
 )
 
+// Deprecated: Use ecdsatss.GeneratePreParams instead.
+// See github.com/KarpelesLab/tss-lib/v2/ecdsatss for the replacement.
+//
 // GeneratePreParams finds two safe primes and computes the Paillier secret required for the protocol.
 // This can be a time consuming process so it is recommended to do it out-of-band.
 // If not specified, a concurrency value equal to the number of available CPU cores will be used.
@@ -40,7 +43,10 @@ func GeneratePreParams(timeout time.Duration, optionalConcurrency ...int) (*Loca
 	return GeneratePreParamsWithContext(ctx, optionalConcurrency...)
 }
 
-// GeneratePreParams finds two safe primes and computes the Paillier secret required for the protocol.
+// Deprecated: Use ecdsatss.GeneratePreParams or ecdsatss.LocalPreGenerator instead.
+// See github.com/KarpelesLab/tss-lib/v2/ecdsatss for the replacement.
+//
+// GeneratePreParamsWithContext finds two safe primes and computes the Paillier secret required for the protocol.
 // This can be a time consuming process so it is recommended to do it out-of-band.
 // If not specified, a concurrency value equal to the number of available CPU cores will be used.
 // If pre-parameters could not be generated before the context is done, an error is returned.
@@ -48,7 +54,10 @@ func GeneratePreParamsWithContext(ctx context.Context, optionalConcurrency ...in
 	return GeneratePreParamsWithContextAndRandom(ctx, rand.Reader, optionalConcurrency...)
 }
 
-// GeneratePreParams finds two safe primes and computes the Paillier secret required for the protocol.
+// Deprecated: Use ecdsatss.LocalPreGenerator instead.
+// See github.com/KarpelesLab/tss-lib/v2/ecdsatss for the replacement.
+//
+// GeneratePreParamsWithContextAndRandom finds two safe primes and computes the Paillier secret required for the protocol.
 // This can be a time consuming process so it is recommended to do it out-of-band.
 // If not specified, a concurrency value equal to the number of available CPU cores will be used.
 // If pre-parameters could not be generated before the context is done, an error is returned.

@@ -58,7 +58,9 @@ type (
 	}
 )
 
-// Exported, used in `tss` client
+// Deprecated: Use eddsatss.NewKeygen instead, which provides a simpler broker-based API
+// without requiring channel setup or manual message routing.
+// See github.com/KarpelesLab/tss-lib/v2/eddsatss for the replacement.
 func NewLocalParty(
 	params *tss.Parameters,
 	out chan<- tss.Message,

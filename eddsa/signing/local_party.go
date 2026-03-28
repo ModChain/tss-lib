@@ -66,6 +66,9 @@ type (
 	}
 )
 
+// Deprecated: Use eddsatss.Key.NewSigning instead, which provides a simpler broker-based API
+// without requiring channel setup or manual message routing.
+// See github.com/KarpelesLab/tss-lib/v2/eddsatss for the replacement.
 func NewLocalParty(
 	msg *big.Int,
 	params *tss.Parameters,

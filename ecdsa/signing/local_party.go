@@ -102,7 +102,9 @@ type (
 	}
 )
 
-// NewLocalParty creates a new signing party for the given message and keygen data.
+// Deprecated: Use ecdsatss.Key.NewSigning instead, which provides a simpler broker-based API
+// without requiring channel setup or manual message routing.
+// See github.com/KarpelesLab/tss-lib/v2/ecdsatss for the replacement.
 func NewLocalParty(
 	msg *big.Int,
 	params *tss.Parameters,
@@ -161,7 +163,8 @@ func NewLocalPartyWithAutoKDD(
 	return NewLocalPartyWithKDD(msg, params, key, keyDerivationDelta, out, end, fullBytesLen...)
 }
 
-// NewLocalPartyWithKDD returns a party with key derivation delta for HD support
+// Deprecated: Use ecdsatss.Key.NewSigning instead.
+// See github.com/KarpelesLab/tss-lib/v2/ecdsatss for the replacement.
 func NewLocalPartyWithKDD(
 	msg *big.Int,
 	params *tss.Parameters,
