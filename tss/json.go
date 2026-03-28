@@ -76,6 +76,7 @@ func NewJsonExpect[T any](typ string, parties []*PartyID, cb func([]*PartyID, []
 		From:    parties,
 		Packet:  make([]*T, len(parties)),
 		missing: len(parties), // nothing received yet
+		cb:      cb,
 	}
 	return res
 }
