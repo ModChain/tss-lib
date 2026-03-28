@@ -7,7 +7,7 @@
 package test
 
 import (
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 func SharedPartyUpdater(party tss.Party, msg tss.Message, errCh chan<- error) {

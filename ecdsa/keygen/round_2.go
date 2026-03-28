@@ -12,11 +12,11 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/ModChain/tss-lib/v2/crypto/facproof"
-	"github.com/ModChain/tss-lib/v2/crypto/modproof"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/facproof"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/modproof"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 const (

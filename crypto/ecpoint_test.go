@@ -13,12 +13,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ModChain/edwards25519"
-	"github.com/ModChain/secp256k1"
+	"github.com/KarpelesLab/edwards25519"
+	"github.com/KarpelesLab/secp256k1"
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/ModChain/tss-lib/v2/crypto"
-	"github.com/ModChain/tss-lib/v2/tss"
+	. "github.com/KarpelesLab/tss-lib/v2/crypto"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 func TestFlattenECPoints(t *testing.T) {

@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ModChain/edwards25519"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/edwards25519"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 func (round *finalization) Start() error {

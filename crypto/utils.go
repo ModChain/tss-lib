@@ -11,7 +11,7 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/ModChain/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/common"
 )
 
 // GenerateNTildei computes NTilde = p*q from two safe primes and returns NTilde along with two random generators of the quadratic residue group.

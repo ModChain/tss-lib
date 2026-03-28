@@ -12,8 +12,8 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/ModChain/tss-lib/v2/crypto/mta"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/mta"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 func (round *round2) Start() error {

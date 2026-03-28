@@ -9,7 +9,7 @@ package signing
 import (
 	"errors"
 
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 func (round *round8) Start() error {

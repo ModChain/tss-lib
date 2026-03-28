@@ -11,8 +11,8 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/ModChain/edwards25519"
-	"github.com/ModChain/secp256k1"
+	"github.com/KarpelesLab/edwards25519"
+	"github.com/KarpelesLab/secp256k1"
 )
 
 // CurveName is a string identifier for an elliptic curve used in TSS operations.

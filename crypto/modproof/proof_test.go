@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/ModChain/tss-lib/v2/crypto/modproof"
-	"github.com/ModChain/tss-lib/v2/ecdsa/keygen"
+	. "github.com/KarpelesLab/tss-lib/v2/crypto/modproof"
+	"github.com/KarpelesLab/tss-lib/v2/ecdsa/keygen"
 	"github.com/stretchr/testify/assert"
 )
 

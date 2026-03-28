@@ -9,8 +9,8 @@ package keygen
 import (
 	"math/big"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 const (

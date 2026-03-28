@@ -16,10 +16,10 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ModChain/edwards25519"
-	"github.com/ModChain/secp256k1"
+	"github.com/KarpelesLab/edwards25519"
+	"github.com/KarpelesLab/secp256k1"
 
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 // ECPoint convenience helper
@@ -82,7 +82,7 @@ func (p *ECPoint) ToECDSAPubKey() *ecdsa.PublicKey {
 	}
 }
 
-// ToEd25519PubKey returns a [github.com/ModChain/edwards25519.PublicKey] object for this public key
+// ToEd25519PubKey returns a [github.com/KarpelesLab/edwards25519.PublicKey] object for this public key
 // or nil if this is not a ed25519 key.
 func (p *ECPoint) ToEd25519PubKey() *edwards25519.PublicKey {
 	return &edwards25519.PublicKey{
@@ -92,7 +92,7 @@ func (p *ECPoint) ToEd25519PubKey() *edwards25519.PublicKey {
 	}
 }
 
-// ToSecp256k1PubKey returns a [github.com/ModChain/secp256k1.PublicKey] object for this public key
+// ToSecp256k1PubKey returns a [github.com/KarpelesLab/secp256k1.PublicKey] object for this public key
 // or nil if this is not a secp256k1 key.
 func (p *ECPoint) ToSecp256k1PubKey() *secp256k1.PublicKey {
 	if p.curve != secp256k1.S256() {

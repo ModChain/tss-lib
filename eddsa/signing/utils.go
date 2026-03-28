@@ -11,8 +11,8 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/ModChain/edwards25519"
-	"github.com/ModChain/tss-lib/v2/common"
+	"github.com/KarpelesLab/edwards25519"
+	"github.com/KarpelesLab/tss-lib/v2/common"
 )
 
 func encodedBytesToBigInt(s *[32]byte) *big.Int {

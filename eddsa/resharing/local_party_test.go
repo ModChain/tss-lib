@@ -11,17 +11,17 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/ModChain/edwards25519"
+	"github.com/KarpelesLab/edwards25519"
 	"github.com/ipfs/go-log"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/ModChain/tss-lib/v2/crypto"
-	"github.com/ModChain/tss-lib/v2/eddsa/keygen"
-	. "github.com/ModChain/tss-lib/v2/eddsa/resharing"
-	"github.com/ModChain/tss-lib/v2/eddsa/signing"
-	"github.com/ModChain/tss-lib/v2/test"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/crypto"
+	"github.com/KarpelesLab/tss-lib/v2/eddsa/keygen"
+	. "github.com/KarpelesLab/tss-lib/v2/eddsa/resharing"
+	"github.com/KarpelesLab/tss-lib/v2/eddsa/signing"
+	"github.com/KarpelesLab/tss-lib/v2/test"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 const (

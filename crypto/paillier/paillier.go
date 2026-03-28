@@ -25,8 +25,8 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	crypto2 "github.com/ModChain/tss-lib/v2/crypto"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	crypto2 "github.com/KarpelesLab/tss-lib/v2/crypto"
 )
 
 const (

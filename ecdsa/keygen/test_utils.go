@@ -16,8 +16,8 @@ import (
 	"runtime"
 	"sort"
 
-	"github.com/ModChain/tss-lib/v2/test"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/test"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 const (

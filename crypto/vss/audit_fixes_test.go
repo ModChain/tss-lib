@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	. "github.com/ModChain/tss-lib/v2/crypto/vss"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	. "github.com/KarpelesLab/tss-lib/v2/crypto/vss"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 // TestReConstructNilShares verifies that ReConstruct handles nil/empty shares.

@@ -16,8 +16,8 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	cmts "github.com/ModChain/tss-lib/v2/crypto/commitments"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	cmts "github.com/KarpelesLab/tss-lib/v2/crypto/commitments"
 )
 
 // Iterations is the number of iterations used in the DLN proof for soundness.

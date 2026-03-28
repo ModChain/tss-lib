@@ -17,8 +17,8 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/ModChain/tss-lib/v2/crypto"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/crypto"
 )
 
 type (

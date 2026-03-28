@@ -10,7 +10,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/ModChain/tss-lib/v2/crypto/dlnproof"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/dlnproof"
 )
 
 // DlnProofVerifier verifies DLN proofs with bounded concurrency.

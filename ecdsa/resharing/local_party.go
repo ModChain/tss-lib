@@ -10,12 +10,12 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/ModChain/tss-lib/v2/crypto"
-	cmt "github.com/ModChain/tss-lib/v2/crypto/commitments"
-	"github.com/ModChain/tss-lib/v2/crypto/vss"
-	"github.com/ModChain/tss-lib/v2/ecdsa/keygen"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/crypto"
+	cmt "github.com/KarpelesLab/tss-lib/v2/crypto/commitments"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/vss"
+	"github.com/KarpelesLab/tss-lib/v2/ecdsa/keygen"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 // Implements Party

@@ -9,8 +9,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/ModChain/tss-lib/v2/crypto/paillier"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/paillier"
 )
 
 const (

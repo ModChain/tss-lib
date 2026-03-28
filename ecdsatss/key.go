@@ -3,8 +3,8 @@ package ecdsatss
 import (
 	"math/big"
 
-	"github.com/ModChain/tss-lib/v2/crypto"
-	"github.com/ModChain/tss-lib/v2/crypto/paillier"
+	"github.com/KarpelesLab/tss-lib/v2/crypto"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/paillier"
 )
 
 // Key represents the data for a local share of key

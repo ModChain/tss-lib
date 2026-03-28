@@ -7,11 +7,11 @@ import (
 	"crypto/elliptic"
 	"math/big"
 
-	"github.com/ModChain/secp256k1/ecckd"
-	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/ModChain/tss-lib/v2/crypto"
-	"github.com/ModChain/tss-lib/v2/crypto/ckd"
-	"github.com/ModChain/tss-lib/v2/ecdsa/keygen"
+	"github.com/KarpelesLab/secp256k1/ecckd"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/crypto"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/ckd"
+	"github.com/KarpelesLab/tss-lib/v2/ecdsa/keygen"
 )
 
 // UpdatePublicKeyAndAdjustBigXj updates the ECDSA public key and adjusts each party's BigXj by the key derivation delta for HD wallet support.

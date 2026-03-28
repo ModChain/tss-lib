@@ -16,7 +16,7 @@ import (
 	reflect "reflect"
 	sync "sync"
 
-	"github.com/ModChain/secp256k1"
+	"github.com/KarpelesLab/secp256k1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )

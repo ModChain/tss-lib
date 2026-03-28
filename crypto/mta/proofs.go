@@ -13,10 +13,10 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/ModChain/tss-lib/v2/crypto"
-	"github.com/ModChain/tss-lib/v2/crypto/paillier"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/crypto"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/paillier"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 const (

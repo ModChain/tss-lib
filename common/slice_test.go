@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ModChain/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/common"
 )
 
 func TestBigIntsToBytes(t *testing.T) {

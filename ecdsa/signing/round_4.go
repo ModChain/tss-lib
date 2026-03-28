@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/ModChain/tss-lib/v2/crypto/schnorr"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/schnorr"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 func (round *round4) Start() error {

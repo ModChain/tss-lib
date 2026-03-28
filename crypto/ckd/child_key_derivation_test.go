@@ -9,8 +9,8 @@ package ckd_test
 import (
 	"testing"
 
-	"github.com/ModChain/secp256k1"
-	. "github.com/ModChain/tss-lib/v2/crypto/ckd"
+	"github.com/KarpelesLab/secp256k1"
+	. "github.com/KarpelesLab/tss-lib/v2/crypto/ckd"
 )
 
 func TestPublicDerivation(t *testing.T) {

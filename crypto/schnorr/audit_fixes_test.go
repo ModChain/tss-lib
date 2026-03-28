@@ -6,10 +6,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/ModChain/tss-lib/v2/crypto"
-	. "github.com/ModChain/tss-lib/v2/crypto/schnorr"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/crypto"
+	. "github.com/KarpelesLab/tss-lib/v2/crypto/schnorr"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 // TestZKProofVerifyNilX verifies that Verify rejects a nil ECPoint for X.

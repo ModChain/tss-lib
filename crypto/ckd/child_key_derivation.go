@@ -14,11 +14,11 @@ import (
 	"hash"
 	"math/big"
 
-	"github.com/ModChain/base58"
-	"github.com/ModChain/secp256k1"
-	"github.com/ModChain/secp256k1/ecckd"
-	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/ModChain/tss-lib/v2/crypto"
+	"github.com/KarpelesLab/base58"
+	"github.com/KarpelesLab/secp256k1"
+	"github.com/KarpelesLab/secp256k1/ecckd"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/crypto"
 	"golang.org/x/crypto/ripemd160"
 )
 

@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ModChain/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/common"
 )
 
 type Party interface {

@@ -10,12 +10,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ModChain/tss-lib/v2/crypto"
-	"github.com/ModChain/tss-lib/v2/crypto/commitments"
-	"github.com/ModChain/tss-lib/v2/crypto/vss"
-	"github.com/ModChain/tss-lib/v2/eddsa/keygen"
-	"github.com/ModChain/tss-lib/v2/eddsa/signing"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/crypto"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/commitments"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/vss"
+	"github.com/KarpelesLab/tss-lib/v2/eddsa/keygen"
+	"github.com/KarpelesLab/tss-lib/v2/eddsa/signing"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 // round 1 represents round 1 of the keygen part of the EDDSA TSS spec

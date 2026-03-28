@@ -12,9 +12,9 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	"github.com/ModChain/tss-lib/v2/crypto"
-	"github.com/ModChain/tss-lib/v2/crypto/paillier"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	"github.com/KarpelesLab/tss-lib/v2/crypto"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/paillier"
 )
 
 // AliceInit encrypts Alice's secret and produces a range proof for the MtA protocol.

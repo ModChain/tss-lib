@@ -7,8 +7,8 @@
 package resharing
 
 import (
-	"github.com/ModChain/tss-lib/v2/eddsa/keygen"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/eddsa/keygen"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 const (

@@ -9,15 +9,15 @@ package keygen
 import (
 	"math/big"
 
-	"github.com/ModChain/tss-lib/v2/crypto/facproof"
-	"github.com/ModChain/tss-lib/v2/crypto/modproof"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/facproof"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/modproof"
 
-	"github.com/ModChain/tss-lib/v2/common"
-	cmt "github.com/ModChain/tss-lib/v2/crypto/commitments"
-	"github.com/ModChain/tss-lib/v2/crypto/dlnproof"
-	"github.com/ModChain/tss-lib/v2/crypto/paillier"
-	"github.com/ModChain/tss-lib/v2/crypto/vss"
-	"github.com/ModChain/tss-lib/v2/tss"
+	"github.com/KarpelesLab/tss-lib/v2/common"
+	cmt "github.com/KarpelesLab/tss-lib/v2/crypto/commitments"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/dlnproof"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/paillier"
+	"github.com/KarpelesLab/tss-lib/v2/crypto/vss"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 // These messages were generated from Protocol Buffers definitions into ecdsa-keygen.pb.go
