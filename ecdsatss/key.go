@@ -21,6 +21,18 @@ type Key struct {
 	ECDSAPub *crypto.ECPoint // y
 }
 
+// NewKey creates a new Key with all slice fields initialized for the given party count.
+func NewKey(partyCount int) *Key {
+	return &Key{
+		Ks:          make([]*big.Int, partyCount),
+		NTildej:     make([]*big.Int, partyCount),
+		H1j:         make([]*big.Int, partyCount),
+		H2j:         make([]*big.Int, partyCount),
+		BigXj:       make([]*crypto.ECPoint, partyCount),
+		PaillierPKs: make([]*paillier.PublicKey, partyCount),
+	}
+}
+
 // LocalPreParams contains the pre-computed Paillier key and safe prime parameters for a party.
 type LocalPreParams struct {
 	PaillierSK                           *paillier.PrivateKey // ski
