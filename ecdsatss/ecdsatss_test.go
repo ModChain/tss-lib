@@ -1,6 +1,7 @@
 package ecdsatss
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"fmt"
@@ -192,7 +193,7 @@ func TestKeygenFull(t *testing.T) {
 		params.SetNoProofMod()
 		params.SetNoProofFac()
 
-		kg, err := NewKeygen(params, preParams[i])
+		kg, err := NewKeygen(context.Background(), params, preParams[i])
 		require.NoError(t, err, "NewKeygen should not fail for party %d", i)
 		keygens[i] = kg
 	}
@@ -247,7 +248,7 @@ func TestKeygenAndSign(t *testing.T) {
 		params.SetNoProofMod()
 		params.SetNoProofFac()
 
-		kg, err := NewKeygen(params, preParams[i])
+		kg, err := NewKeygen(context.Background(), params, preParams[i])
 		require.NoError(t, err, "NewKeygen should not fail for party %d", i)
 		keygens[i] = kg
 	}
@@ -285,7 +286,7 @@ func TestKeygenAndSign(t *testing.T) {
 		params := tss.NewParameters(tss.S256(), p2pCtx, pIDs[i], partyCount, threshold)
 		params.SetBroker(signHub.brokers[i])
 
-		sig, err := keys[i].NewSigning(msg, params)
+		sig, err := keys[i].NewSigning(context.Background(), msg, params)
 		require.NoError(t, err, "NewSigning should not fail for party %d", i)
 		signings[i] = sig
 	}
@@ -440,7 +441,7 @@ func TestResharing(t *testing.T) {
 		params.SetNoProofMod()
 		params.SetNoProofFac()
 
-		kg, err := NewKeygen(params, oldPreParams[i])
+		kg, err := NewKeygen(context.Background(), params, oldPreParams[i])
 		require.NoError(t, err, "NewKeygen should not fail for old party %d", i)
 		keygens[i] = kg
 	}
@@ -504,7 +505,7 @@ func TestResharing(t *testing.T) {
 		params.SetNoProofFac()
 		params.SetBroker(reshareHub.brokerFor(oldPIDs[i]))
 
-		rs, err := NewResharing(params, oldKeys[i])
+		rs, err := NewResharing(context.Background(), params, oldKeys[i])
 		require.NoError(t, err, "NewResharing should not fail for old party %d", i)
 		resharings[i] = rs
 	}
@@ -516,7 +517,7 @@ func TestResharing(t *testing.T) {
 		params.SetNoProofFac()
 		params.SetBroker(reshareHub.brokerFor(newPIDs[i]))
 
-		rs, err := NewResharing(params, nil, newPreParams[i])
+		rs, err := NewResharing(context.Background(), params, nil, newPreParams[i])
 		require.NoError(t, err, "NewResharing should not fail for new party %d", i)
 		resharings[oldPartyCount+i] = rs
 	}
@@ -568,7 +569,7 @@ func TestResharing(t *testing.T) {
 		params := tss.NewParameters(tss.S256(), newP2pCtx, newPIDs[i], newPartyCount, newThreshold)
 		params.SetBroker(signHub.brokers[i])
 
-		sig, err := newKeys[i].NewSigning(msg, params)
+		sig, err := newKeys[i].NewSigning(context.Background(), msg, params)
 		require.NoError(t, err, "NewSigning should not fail for new party %d", i)
 		signings[i] = sig
 	}

@@ -23,6 +23,7 @@ var zero = big.NewInt(0)
 
 // Keygen is an object used to track a key currently being generated
 type Keygen struct {
+	ctx           context.Context
 	params        *tss.Parameters // contains curve, parties, etc
 	KGCs          []cmts.HashCommitment
 	vs            vss.Vs
@@ -48,9 +49,10 @@ type Keygen struct {
 }
 
 // NewKeygen creates a new Keygen instance and executes round 1 of the key generation protocol.
-func NewKeygen(params *tss.Parameters, optionalPreParams ...LocalPreParams) (*Keygen, error) {
+func NewKeygen(ctx context.Context, params *tss.Parameters, optionalPreParams ...LocalPreParams) (*Keygen, error) {
 	partyCount := params.PartyCount()
 	res := &Keygen{
+		ctx:    ctx,
 		params: params,
 		KGCs:   make([]cmts.HashCommitment, partyCount),
 		data:   NewKey(partyCount),
@@ -114,7 +116,7 @@ func (kg *Keygen) round1() error {
 	} else if kg.data.LocalPreParams.ValidateWithProof() {
 		preParams = &kg.data.LocalPreParams
 	} else {
-		ctx, cancel := context.WithTimeout(context.Background(), kg.params.SafePrimeGenTimeout())
+		ctx, cancel := context.WithTimeout(kg.ctx, kg.params.SafePrimeGenTimeout())
 		defer cancel()
 		preParams, err = (&LocalPreGenerator{Context: ctx, Rand: kg.params.Rand(), Concurrency: kg.params.Concurrency()}).Generate()
 		if err != nil {
@@ -188,6 +190,10 @@ func (kg *Keygen) round1() error {
 
 // round2 processes round 1 messages from other parties and executes round 2.
 func (kg *Keygen) round2(otherIds []*tss.PartyID, r1msgs []*keygenRound1msg) {
+	if kg.ctx.Err() != nil {
+		kg.Err <- kg.ctx.Err()
+		return
+	}
 	kg.round = 2
 
 	Pi := kg.params.PartyID()
@@ -359,6 +365,10 @@ func (kg *Keygen) onR2msg2(from []*tss.PartyID, msgs []*keygenRound2msg2) {
 
 // processRound3 verifies round 2 messages and executes round 3.
 func (kg *Keygen) processRound3() {
+	if kg.ctx.Err() != nil {
+		kg.Err <- kg.ctx.Err()
+		return
+	}
 	kg.round = 3
 
 	Pi := kg.params.PartyID()
@@ -581,6 +591,10 @@ func (kg *Keygen) processRound3() {
 
 // round4 verifies Paillier proofs from all other parties and completes keygen.
 func (kg *Keygen) round4(otherIds []*tss.PartyID, r3msgs []*keygenRound3msg) {
+	if kg.ctx.Err() != nil {
+		kg.Err <- kg.ctx.Err()
+		return
+	}
 	kg.round = 4
 
 	allParties := kg.params.Parties().IDs()

@@ -1,6 +1,7 @@
 package eddsatss
 
 import (
+	"context"
 	"crypto/sha512"
 	"errors"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 
 // Signing tracks a threshold EdDSA signing operation.
 type Signing struct {
+	ctx       context.Context
 	params    *tss.Parameters
 	key       *Key
 	msg       *big.Int
@@ -32,9 +34,10 @@ type Signing struct {
 }
 
 // NewSigning creates a new Signing instance and kicks off round 1 of the EdDSA signing protocol.
-func (key *Key) NewSigning(msg *big.Int, params *tss.Parameters) (*Signing, error) {
+func (key *Key) NewSigning(ctx context.Context, msg *big.Int, params *tss.Parameters) (*Signing, error) {
 	partyCount := params.PartyCount()
 	s := &Signing{
+		ctx:    ctx,
 		params: params,
 		key:    key,
 		msg:    msg,
@@ -128,6 +131,10 @@ func (s *Signing) round1() error {
 }
 
 func (s *Signing) round2(otherIds []*tss.PartyID, r1msgs []*signRound1msg) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	Pi := s.params.PartyID()
 	i := Pi.Index
 
@@ -167,6 +174,10 @@ func (s *Signing) round2(otherIds []*tss.PartyID, r1msgs []*signRound1msg) {
 }
 
 func (s *Signing) round3(otherIds []*tss.PartyID, r2msgs []*signRound2msg) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	Pi := s.params.PartyID()
 	i := Pi.Index
 	ec := s.params.EC()
@@ -280,6 +291,10 @@ func (s *Signing) round3(otherIds []*tss.PartyID, r2msgs []*signRound2msg) {
 }
 
 func (s *Signing) finalize(r *big.Int, localS *[32]byte, encodedR *[32]byte, r3msgs []*signRound3msg) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	// sum all sj: start with our own si
 	sumS := *localS
 	one := [32]byte{}

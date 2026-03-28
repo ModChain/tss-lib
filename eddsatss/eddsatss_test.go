@@ -1,6 +1,7 @@
 package eddsatss
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"sync"
@@ -109,7 +110,7 @@ func TestKeygenFull(t *testing.T) {
 		params := tss.NewParameters(tss.Edwards(), p2pCtx, pIDs[i], partyCount, threshold)
 		params.SetBroker(hub.brokers[i])
 
-		kg, err := NewKeygen(params)
+		kg, err := NewKeygen(context.Background(), params)
 		require.NoError(t, err, "NewKeygen should not fail for party %d", i)
 		keygens[i] = kg
 	}
@@ -247,7 +248,7 @@ func TestKeygenAndSign(t *testing.T) {
 		params := tss.NewParameters(tss.Edwards(), p2pCtx, pIDs[i], partyCount, threshold)
 		params.SetBroker(hub.brokers[i])
 
-		kg, err := NewKeygen(params)
+		kg, err := NewKeygen(context.Background(), params)
 		require.NoError(t, err)
 		keygens[i] = kg
 	}
@@ -275,7 +276,7 @@ func TestKeygenAndSign(t *testing.T) {
 		params := tss.NewParameters(tss.Edwards(), p2pCtx, pIDs[i], partyCount, threshold)
 		params.SetBroker(signHub.brokers[i])
 
-		sg, err := keys[i].NewSigning(msg, params)
+		sg, err := keys[i].NewSigning(context.Background(), msg, params)
 		require.NoError(t, err, "NewSigning should not fail for party %d", i)
 		signings[i] = sg
 	}
@@ -324,7 +325,7 @@ func TestResharing(t *testing.T) {
 		params := tss.NewParameters(tss.Edwards(), oldP2PCtx, oldPIDs[i], oldPartyCount, oldThreshold)
 		params.SetBroker(kgHub.brokers[i])
 
-		kg, err := NewKeygen(params)
+		kg, err := NewKeygen(context.Background(), params)
 		require.NoError(t, err, "NewKeygen should not fail for party %d", i)
 		keygens[i] = kg
 	}
@@ -375,7 +376,7 @@ func TestResharing(t *testing.T) {
 		params := tss.NewReSharingParameters(tss.Edwards(), oldP2PCtx, newP2PCtx, oldPIDs[i], oldPartyCount, oldThreshold, newPartyCount, newThreshold)
 		params.SetBroker(oldBrokers[i])
 
-		rs, err := NewResharing(params, oldKeys[i])
+		rs, err := NewResharing(context.Background(), params, oldKeys[i])
 		require.NoError(t, err, "NewResharing should not fail for old party %d", i)
 		resharings[i] = rs
 	}
@@ -385,7 +386,7 @@ func TestResharing(t *testing.T) {
 		params := tss.NewReSharingParameters(tss.Edwards(), oldP2PCtx, newP2PCtx, newPIDs[i], oldPartyCount, oldThreshold, newPartyCount, newThreshold)
 		params.SetBroker(newBrokers[i])
 
-		rs, err := NewResharing(params, nil)
+		rs, err := NewResharing(context.Background(), params, nil)
 		require.NoError(t, err, "NewResharing should not fail for new party %d", i)
 		resharings[oldPartyCount+i] = rs
 	}
@@ -429,7 +430,7 @@ func TestResharing(t *testing.T) {
 		params := tss.NewParameters(tss.Edwards(), signCtx, newPIDs[i], newPartyCount, newThreshold)
 		params.SetBroker(signHub.brokers[i])
 
-		sg, err := newKeys[i].NewSigning(msg, params)
+		sg, err := newKeys[i].NewSigning(context.Background(), msg, params)
 		require.NoError(t, err, "NewSigning should not fail for new party %d", i)
 		signings[i] = sg
 	}

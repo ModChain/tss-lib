@@ -1,6 +1,7 @@
 package eddsatss
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"sync/atomic"
@@ -14,6 +15,7 @@ import (
 
 // Resharing tracks a key resharing operation between old and new committees.
 type Resharing struct {
+	ctx    context.Context
 	params *tss.ReSharingParameters
 	input  *Key // old committee's key data (nil for pure new members)
 
@@ -33,8 +35,9 @@ type Resharing struct {
 // NewResharing creates a new Resharing instance and starts the protocol.
 // For old committee members, input must be their existing key data.
 // For pure new members, input should be nil.
-func NewResharing(params *tss.ReSharingParameters, input *Key) (*Resharing, error) {
+func NewResharing(ctx context.Context, params *tss.ReSharingParameters, input *Key) (*Resharing, error) {
 	rs := &Resharing{
+		ctx:    ctx,
 		params: params,
 		input:  input,
 		Done:   make(chan *Key, 1),
@@ -149,6 +152,10 @@ func (rs *Resharing) setupNewRound1Receiver() {
 
 // round2New: new committee receives round1 messages, verifies EDDSAPub consistency, sends ACK.
 func (rs *Resharing) round2New(oldIds []*tss.PartyID, r1msgs []*resharingRound1msg) {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	Pi := rs.params.PartyID()
 	ec := rs.params.EC()
 
@@ -225,6 +232,10 @@ func (rs *Resharing) setupNewRound3Receiver(oldIds []*tss.PartyID, r1msgs []*res
 
 // round3Old: old committee sends P2P VSS shares to each new party and broadcasts decommitment.
 func (rs *Resharing) round3Old() {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	Pi := rs.params.PartyID()
 
 	// Send P2P share to each new party
@@ -288,6 +299,10 @@ func (rs *Resharing) round4New(
 	r3msg2Ids []*tss.PartyID,
 	r3msg2s []*resharingRound3msg2,
 ) {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	Pi := rs.params.PartyID()
 	ec := rs.params.EC()
 	allOldIds := rs.params.OldParties().IDs()
@@ -473,6 +488,10 @@ func (rs *Resharing) round4New(
 
 // round5Old: old committee zeros Xi and signals done.
 func (rs *Resharing) round5Old() {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	if rs.input != nil {
 		rs.input.Xi.SetInt64(0)
 	}

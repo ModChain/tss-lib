@@ -63,7 +63,7 @@ The broker must implement `tss.MessageBroker`:
 // Pre-compute Paillier key and safe primes (recommended out-of-band)
 preParams, _ := ecdsatss.GeneratePreParams(5 * time.Minute)
 
-kg, err := ecdsatss.NewKeygen(params, *preParams)
+kg, err := ecdsatss.NewKeygen(ctx, params, *preParams)
 // Wait for result:
 select {
 case key := <-kg.Done:
@@ -75,7 +75,7 @@ case err := <-kg.Err:
 
 ### ECDSA Signing
 ```go
-sig, err := key.NewSigning(msgHash, params)
+sig, err := key.NewSigning(ctx, msgHash, params)
 select {
 case result := <-sig.Done:
     // result.Signature contains R || S
@@ -88,7 +88,7 @@ case err := <-sig.Err:
 ### ECDSA Re-Sharing
 ```go
 // Old committee members pass their key; new committee members pass nil
-rs, err := ecdsatss.NewResharing(resharingParams, oldKey, *newPreParams)
+rs, err := ecdsatss.NewResharing(ctx, resharingParams, oldKey, *newPreParams)
 select {
 case newKey := <-rs.Done:
     // New committee: persist newKey
@@ -104,15 +104,15 @@ The `eddsatss` package follows the same pattern but is simpler (no Paillier keys
 
 ```go
 // Keygen
-kg, err := eddsatss.NewKeygen(params)
+kg, err := eddsatss.NewKeygen(ctx, params)
 key := <-kg.Done
 
 // Signing
-sig, err := key.NewSigning(msg, params)
+sig, err := key.NewSigning(ctx, msg, params)
 result := <-sig.Done // result.Signature is 64-byte Ed25519 signature
 
 // Re-sharing
-rs, err := eddsatss.NewResharing(resharingParams, oldKey)
+rs, err := eddsatss.NewResharing(ctx, resharingParams, oldKey)
 newKey := <-rs.Done
 ```
 

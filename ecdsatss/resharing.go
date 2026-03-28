@@ -23,6 +23,7 @@ import (
 
 // Resharing tracks an ECDSA key resharing operation from an old committee to a new committee.
 type Resharing struct {
+	ctx    context.Context
 	params *tss.ReSharingParameters
 	input  *Key // old committee key data (nil for pure new members)
 
@@ -77,8 +78,9 @@ type Resharing struct {
 // NewResharing creates a new Resharing instance and begins the resharing protocol.
 // For old committee members, input is their existing key data.
 // For new committee members, input is nil and optionalPreParams provides the Paillier pre-parameters.
-func NewResharing(params *tss.ReSharingParameters, input *Key, optionalPreParams ...LocalPreParams) (*Resharing, error) {
+func NewResharing(ctx context.Context, params *tss.ReSharingParameters, input *Key, optionalPreParams ...LocalPreParams) (*Resharing, error) {
 	rs := &Resharing{
+		ctx:    ctx,
 		params: params,
 		input:  input,
 		Done:   make(chan *Key, 1),
@@ -260,6 +262,10 @@ func (rs *Resharing) round1New() {
 // ---- Round 2 (New committee receives R1, sends Paillier+proofs to new, ACK to old) ---- //
 
 func (rs *Resharing) onR1New(from []*tss.PartyID, msgs []*resharingRound1msg) {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	Pi := rs.params.PartyID()
 	i := Pi.Index
 	ec := rs.params.EC()
@@ -306,7 +312,7 @@ func (rs *Resharing) onR1New(from []*tss.PartyID, msgs []*resharingRound1msg) {
 	} else if rs.newKey.LocalPreParams.ValidateWithProof() {
 		preParams = &rs.newKey.LocalPreParams
 	} else {
-		ctx, cancel := context.WithTimeout(context.Background(), rs.params.SafePrimeGenTimeout())
+		ctx, cancel := context.WithTimeout(rs.ctx, rs.params.SafePrimeGenTimeout())
 		defer cancel()
 		var err error
 		preParams, err = (&LocalPreGenerator{Context: ctx, Rand: rs.params.Rand(), Concurrency: rs.params.Concurrency()}).Generate()
@@ -404,6 +410,10 @@ func (rs *Resharing) onR1New(from []*tss.PartyID, msgs []*resharingRound1msg) {
 }
 
 func (rs *Resharing) onR2msg1New(from []*tss.PartyID, msgs []*resharingRound2msg1) {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	rs.r2msg1From = from
 	rs.r2msg1 = msgs
 	if atomic.AddInt32(&rs.newR4pending, -1) == 0 {
@@ -412,6 +422,10 @@ func (rs *Resharing) onR2msg1New(from []*tss.PartyID, msgs []*resharingRound2msg
 }
 
 func (rs *Resharing) onR3msg1New(from []*tss.PartyID, msgs []*resharingRound3msg1) {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	rs.r3msg1From = from
 	rs.r3msg1 = msgs
 	if atomic.AddInt32(&rs.newR4pending, -1) == 0 {
@@ -420,6 +434,10 @@ func (rs *Resharing) onR3msg1New(from []*tss.PartyID, msgs []*resharingRound3msg
 }
 
 func (rs *Resharing) onR3msg2New(from []*tss.PartyID, msgs []*resharingRound3msg2) {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	rs.r3msg2From = from
 	rs.r3msg2 = msgs
 	if atomic.AddInt32(&rs.newR4pending, -1) == 0 {
@@ -430,6 +448,10 @@ func (rs *Resharing) onR3msg2New(from []*tss.PartyID, msgs []*resharingRound3msg
 // ---- Round 2 (Old committee receives ACK from new) ---- //
 
 func (rs *Resharing) onR2msg2Old(from []*tss.PartyID, msgs []*resharingRound2msg2) {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	// Old committee proceeds to round 3
 	rs.round3Old()
 }
@@ -437,6 +459,10 @@ func (rs *Resharing) onR2msg2Old(from []*tss.PartyID, msgs []*resharingRound2msg
 // ---- Round 3 (Old committee sends VSS shares P2P + decommitment broadcast) ---- //
 
 func (rs *Resharing) round3Old() {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	Pi := rs.params.PartyID()
 	newIDs := rs.params.NewParties().IDs()
 
@@ -467,6 +493,10 @@ func (rs *Resharing) round3Old() {
 // ---- Round 4 (New committee: verify proofs, compute new key shares, send FacProofs) ---- //
 
 func (rs *Resharing) round4New() {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	Pi := rs.params.PartyID()
 	ec := rs.params.EC()
 	newIDs := rs.params.NewParties().IDs()
@@ -781,6 +811,10 @@ func (rs *Resharing) round4New() {
 }
 
 func (rs *Resharing) onR4msg1New(from []*tss.PartyID, msgs []*resharingRound4msg1) {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	rs.r4msg1From = from
 	rs.r4msg1 = msgs
 	if atomic.AddInt32(&rs.newR5pending, -1) == 0 {
@@ -789,6 +823,10 @@ func (rs *Resharing) onR4msg1New(from []*tss.PartyID, msgs []*resharingRound4msg
 }
 
 func (rs *Resharing) onR4msg2New(from []*tss.PartyID, msgs []*resharingRound4msg2) {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	rs.r4msg2From = from
 	rs.r4msg2 = msgs
 	if atomic.AddInt32(&rs.newR5pending, -1) == 0 {
@@ -799,6 +837,10 @@ func (rs *Resharing) onR4msg2New(from []*tss.PartyID, msgs []*resharingRound4msg
 // ---- Round 4 (Old committee receives ACK from new committee) ---- //
 
 func (rs *Resharing) onR4msg2Old(from []*tss.PartyID, msgs []*resharingRound4msg2) {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	// Old committee: zero out Xi and finish
 	rs.input.Xi.SetInt64(0)
 	rs.Done <- rs.input
@@ -807,6 +849,10 @@ func (rs *Resharing) onR4msg2Old(from []*tss.PartyID, msgs []*resharingRound4msg
 // ---- Round 5 (New committee: verify FacProofs and save) ---- //
 
 func (rs *Resharing) round5New() {
+	if rs.ctx.Err() != nil {
+		rs.Err <- rs.ctx.Err()
+		return
+	}
 	i := rs.params.PartyID().Index
 
 	ContextI := append(rs.ssid, big.NewInt(int64(i)).Bytes()...)

@@ -1,6 +1,7 @@
 package ecdsatss
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
@@ -18,6 +19,7 @@ import (
 
 // Signing tracks a threshold ECDSA signing operation.
 type Signing struct {
+	ctx    context.Context
 	params *tss.Parameters
 	key    *Key
 
@@ -80,9 +82,10 @@ type Signing struct {
 }
 
 // NewSigning creates a new Signing instance and kicks off round 1 of the ECDSA signing protocol.
-func (key *Key) NewSigning(msg *big.Int, params *tss.Parameters) (*Signing, error) {
+func (key *Key) NewSigning(ctx context.Context, msg *big.Int, params *tss.Parameters) (*Signing, error) {
 	partyCount := params.PartyCount()
 	s := &Signing{
+		ctx:           ctx,
 		params:        params,
 		key:           key,
 		m:             msg,
@@ -283,6 +286,10 @@ func (s *Signing) round1() error {
 }
 
 func (s *Signing) onR1msg1(from []*tss.PartyID, msgs []*signRound1msg1) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	s.r1msg1From = from
 	s.r1msg1 = msgs
 	if atomic.AddInt32(&s.r1pending, -1) == 0 {
@@ -291,6 +298,10 @@ func (s *Signing) onR1msg1(from []*tss.PartyID, msgs []*signRound1msg1) {
 }
 
 func (s *Signing) onR1msg2(from []*tss.PartyID, msgs []*signRound1msg2) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	s.r1msg2From = from
 	s.r1msg2 = msgs
 	if atomic.AddInt32(&s.r1pending, -1) == 0 {
@@ -299,6 +310,10 @@ func (s *Signing) onR1msg2(from []*tss.PartyID, msgs []*signRound1msg2) {
 }
 
 func (s *Signing) round2() {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	Pi := s.params.PartyID()
 	i := Pi.Index
 	ec := s.params.EC()
@@ -452,6 +467,10 @@ func (s *Signing) round2() {
 }
 
 func (s *Signing) round3(otherIds []*tss.PartyID, r2msgs []*signRound2msg) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	Pi := s.params.PartyID()
 	i := Pi.Index
 	ec := s.params.EC()
@@ -580,6 +599,10 @@ func (s *Signing) round3(otherIds []*tss.PartyID, r2msgs []*signRound2msg) {
 }
 
 func (s *Signing) round4(otherIds []*tss.PartyID, r3msgs []*signRound3msg) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	Pi := s.params.PartyID()
 	i := Pi.Index
 	ec := s.params.EC()
@@ -631,6 +654,10 @@ func (s *Signing) round4(otherIds []*tss.PartyID, r3msgs []*signRound3msg) {
 }
 
 func (s *Signing) round5(otherIds []*tss.PartyID, r4msgs []*signRound4msg) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	Pi := s.params.PartyID()
 	i := Pi.Index
 	ec := s.params.EC()
@@ -757,6 +784,10 @@ func (s *Signing) round5(otherIds []*tss.PartyID, r4msgs []*signRound4msg) {
 }
 
 func (s *Signing) round6(otherIds []*tss.PartyID, r5msgs []*signRound5msg) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	Pi := s.params.PartyID()
 	i := Pi.Index
 	allParties := s.params.Parties().IDs()
@@ -813,6 +844,10 @@ func (s *Signing) round6(otherIds []*tss.PartyID, r5msgs []*signRound5msg) {
 }
 
 func (s *Signing) round7(otherIds []*tss.PartyID, r6msgs []*signRound6msg) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	Pi := s.params.PartyID()
 	i := Pi.Index
 	ec := s.params.EC()
@@ -947,6 +982,10 @@ func (s *Signing) round7(otherIds []*tss.PartyID, r6msgs []*signRound6msg) {
 }
 
 func (s *Signing) round8(otherIds []*tss.PartyID, r7msgs []*signRound7msg) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	Pi := s.params.PartyID()
 	i := Pi.Index
 	allParties := s.params.Parties().IDs()
@@ -983,6 +1022,10 @@ func (s *Signing) round8(otherIds []*tss.PartyID, r7msgs []*signRound7msg) {
 }
 
 func (s *Signing) round9(otherIds []*tss.PartyID, r8msgs []*signRound8msg) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	Pi := s.params.PartyID()
 	i := Pi.Index
 	ec := s.params.EC()
@@ -1046,6 +1089,10 @@ func (s *Signing) round9(otherIds []*tss.PartyID, r8msgs []*signRound8msg) {
 }
 
 func (s *Signing) finalize(otherIds []*tss.PartyID, r9msgs []*signRound9msg) {
+	if s.ctx.Err() != nil {
+		s.Err <- s.ctx.Err()
+		return
+	}
 	ec := s.params.EC()
 	modN := common.ModInt(ec.Params().N)
 

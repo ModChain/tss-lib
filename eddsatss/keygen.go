@@ -1,6 +1,7 @@
 package eddsatss
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
@@ -16,6 +17,7 @@ import (
 
 // Keygen tracks a key currently being generated via the EdDSA TSS protocol.
 type Keygen struct {
+	ctx           context.Context
 	params        *tss.Parameters
 	KGCs          []cmts.HashCommitment
 	vs            vss.Vs
@@ -31,9 +33,10 @@ type Keygen struct {
 }
 
 // NewKeygen creates a new Keygen instance and kicks off round 1 of the EdDSA key generation protocol.
-func NewKeygen(params *tss.Parameters) (*Keygen, error) {
+func NewKeygen(ctx context.Context, params *tss.Parameters) (*Keygen, error) {
 	partyCount := params.PartyCount()
 	kg := &Keygen{
+		ctx:    ctx,
 		params: params,
 		KGCs:   make([]cmts.HashCommitment, partyCount),
 		data:   NewKey(partyCount),
@@ -125,6 +128,10 @@ func (kg *Keygen) round1() error {
 }
 
 func (kg *Keygen) round2(otherIds []*tss.PartyID, r1msgs []*keygenRound1msg) {
+	if kg.ctx.Err() != nil {
+		kg.Err <- kg.ctx.Err()
+		return
+	}
 	Pi := kg.params.PartyID()
 	i := Pi.Index
 
@@ -209,6 +216,10 @@ func (kg *Keygen) round2(otherIds []*tss.PartyID, r1msgs []*keygenRound1msg) {
 }
 
 func (kg *Keygen) processRound3(otherIds []*tss.PartyID, r2msg1s []*keygenRound2msg1, r2msg2s []*keygenRound2msg2) {
+	if kg.ctx.Err() != nil {
+		kg.Err <- kg.ctx.Err()
+		return
+	}
 	ec := kg.params.EC()
 	PIdx := kg.params.PartyID().Index
 
