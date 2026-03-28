@@ -29,10 +29,10 @@ type Signing struct {
 	bigWs          []*crypto.ECPoint // transformed BigXj with Lagrange coefficients
 
 	// round 2
-	betas  []*big.Int
-	c1jis  []*big.Int
-	c2jis  []*big.Int
-	vs     []*big.Int
+	betas []*big.Int
+	c1jis []*big.Int
+	c2jis []*big.Int
+	vs    []*big.Int
 
 	// round 3
 	theta *big.Int

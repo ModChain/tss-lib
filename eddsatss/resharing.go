@@ -23,8 +23,8 @@ type Resharing struct {
 	vD        cmts.HashDeCommitment
 
 	// Round 4 temp (new committee)
-	eddsaPub    *crypto.ECPoint // received from old committee
-	round5NewKey *Key           // new key computed in round4, saved in round5
+	eddsaPub     *crypto.ECPoint // received from old committee
+	round5NewKey *Key            // new key computed in round4, saved in round5
 
 	Done chan *Key
 	Err  chan error

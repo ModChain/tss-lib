@@ -15,9 +15,9 @@ type signRound1msg2 struct {
 
 // signRound2msg is a P2P message containing the MtA ciphertexts and Bob proofs.
 type signRound2msg struct {
-	C1       []byte   `json:"c1"`
-	ProofBob [][]byte `json:"proof_bob"`
-	C2       []byte   `json:"c2"`
+	C1         []byte   `json:"c1"`
+	ProofBob   [][]byte `json:"proof_bob"`
+	C2         []byte   `json:"c2"`
 	ProofBobWC [][]byte `json:"proof_bob_wc"`
 }
 

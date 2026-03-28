@@ -16,15 +16,15 @@ import (
 
 // Signing tracks a threshold EdDSA signing operation.
 type Signing struct {
-	params   *tss.Parameters
-	key      *Key
-	msg      *big.Int
-	wi       *big.Int
-	ri       *big.Int
-	pointRi  *crypto.ECPoint
-	deCommit cmts.HashDeCommitment
-	cjs      []*big.Int
-	ssid     []byte
+	params    *tss.Parameters
+	key       *Key
+	msg       *big.Int
+	wi        *big.Int
+	ri        *big.Int
+	pointRi   *crypto.ECPoint
+	deCommit  cmts.HashDeCommitment
+	cjs       []*big.Int
+	ssid      []byte
 	ssidNonce *big.Int
 
 	Done chan *SignatureData
@@ -35,12 +35,12 @@ type Signing struct {
 func (key *Key) NewSigning(msg *big.Int, params *tss.Parameters) (*Signing, error) {
 	partyCount := params.PartyCount()
 	s := &Signing{
-		params:   params,
-		key:      key,
-		msg:      msg,
-		cjs:      make([]*big.Int, partyCount),
-		Done:     make(chan *SignatureData, 1),
-		Err:      make(chan error, 1),
+		params: params,
+		key:    key,
+		msg:    msg,
+		cjs:    make([]*big.Int, partyCount),
+		Done:   make(chan *SignatureData, 1),
+		Err:    make(chan error, 1),
 	}
 	err := s.round1()
 	if err != nil {

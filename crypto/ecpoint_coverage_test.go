@@ -1,8 +1,8 @@
 package crypto_test
 
 import (
-	"encoding/gob"
 	"bytes"
+	"encoding/gob"
 	"math/big"
 	"testing"
 

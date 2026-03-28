@@ -28,10 +28,10 @@ func newTestPaillierSK() *paillier.PrivateKey {
 
 	return &paillier.PrivateKey{
 		PublicKey: paillier.PublicKey{N: N},
-		LambdaN:  LambdaN,
-		PhiN:     PhiN,
-		P:        P,
-		Q:        Q,
+		LambdaN:   LambdaN,
+		PhiN:      PhiN,
+		P:         P,
+		Q:         Q,
 	}
 }
 
@@ -330,8 +330,8 @@ func TestKeygenAndSign(t *testing.T) {
 // because old and new committees have separate index spaces.
 
 type resharingBroker struct {
-	keyInt *big.Int // KeyInt of the party this broker belongs to
-	hub    *resharingHub
+	keyInt   *big.Int // KeyInt of the party this broker belongs to
+	hub      *resharingHub
 	handlers map[string]tss.MessageReceiver
 	pending  map[string][]*tss.JsonMessage
 	mu       sync.Mutex
