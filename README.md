@@ -38,58 +38,128 @@ In contrast to MultiSig solutions, transactions produced by TSS preserve the pri
 
 There is also a performance bonus in that blockchain nodes may check the validity of a signature without any extra MultiSig logic or processing.
 
-## Usage
-You should start by creating an instance of a `LocalParty` and giving it the arguments that it needs.
+## Usage (v2.2+ — Recommended)
 
-The `LocalParty` that you use should be from the `keygen`, `signing` or `resharing` package depending on what you want to do.
+The `ecdsatss` and `eddsatss` packages provide a broker-based API that is simpler to use than the legacy channel-based API. Messages are routed automatically through a `tss.MessageBroker`, and protocol rounds chain via callbacks — no manual channel management or message routing required.
 
 ### Setup
 ```go
-// When using the keygen party it is recommended that you pre-compute the "safe primes" and Paillier secret beforehand because this can take some time.
-// This code will generate those parameters using a concurrency limit equal to the number of available CPU cores.
-preParams, _ := keygen.GeneratePreParams(1 * time.Minute)
-
-// Create a `*PartyID` for each participating peer on the network (you should call `tss.NewPartyID` for each one)
+// Create PartyIDs for each participant
 parties := tss.SortPartyIDs(getParticipantPartyIDs())
-
-// Set up the parameters
-// Note: The `id` and `moniker` fields are for convenience to allow you to easily track participants.
-// The `id` should be a unique string representing this party in the network and `moniker` can be anything (even left blank).
-// The `uniqueKey` is a unique identifying key for this peer (such as its p2p public key) as a big.Int.
-thisParty := tss.NewPartyID(id, moniker, uniqueKey)
 ctx := tss.NewPeerContext(parties)
+thisParty := tss.NewPartyID(id, moniker, uniqueKey)
 
-// Select an elliptic curve
-// use ECDSA
-curve := tss.S256()
-// or use EdDSA
-// curve := tss.Edwards()
+// Select a curve: tss.S256() for ECDSA, tss.Edwards() for EdDSA
+params := tss.NewParameters(tss.S256(), ctx, thisParty, len(parties), threshold)
 
-params := tss.NewParameters(curve, ctx, thisParty, len(parties), threshold)
+// Set a MessageBroker that routes messages between parties over your transport
+params.SetBroker(myBroker)
+```
 
-// You should keep a local mapping of `id` strings to `*PartyID` instances so that an incoming message can have its origin party's `*PartyID` recovered for passing to `UpdateFromBytes` (see below)
-partyIDMap := make(map[string]*PartyID)
-for _, id := range parties {
-    partyIDMap[id.Id] = id
+The broker must implement `tss.MessageBroker`:
+- `Receive(msg *tss.JsonMessage) error` — called by the protocol to send outgoing messages; your implementation should route them to the destination party's broker.
+- `Connect(typ string, dest tss.MessageReceiver)` — called by the protocol to register handlers for incoming messages by type.
+
+### ECDSA Keygen
+```go
+// Pre-compute Paillier key and safe primes (recommended out-of-band)
+preParams, _ := ecdsatss.GeneratePreParams(5 * time.Minute)
+
+kg, err := ecdsatss.NewKeygen(params, *preParams)
+// Wait for result:
+select {
+case key := <-kg.Done:
+    // Persist key to secure storage
+case err := <-kg.Err:
+    // Handle error
 }
 ```
 
-### Keygen
-Use the `keygen.LocalParty` for the keygen protocol. The save data you receive through the `endCh` upon completion of the protocol should be persisted to secure storage.
+### ECDSA Signing
+```go
+sig, err := key.NewSigning(msgHash, params)
+select {
+case result := <-sig.Done:
+    // result.Signature contains R || S
+    // result.Recovery contains the recovery byte
+case err := <-sig.Err:
+    // Handle error
+}
+```
+
+### ECDSA Re-Sharing
+```go
+// Old committee members pass their key; new committee members pass nil
+rs, err := ecdsatss.NewResharing(resharingParams, oldKey, *newPreParams)
+select {
+case newKey := <-rs.Done:
+    // New committee: persist newKey
+    // Old committee: receives nil (old key is zeroed)
+case err := <-rs.Err:
+    // Handle error
+}
+```
+
+### EdDSA
+
+The `eddsatss` package follows the same pattern but is simpler (no Paillier keys or pre-params):
 
 ```go
-party := keygen.NewLocalParty(params, outCh, endCh, preParams) // Omit the last arg to compute the pre-params in round 1
+// Keygen
+kg, err := eddsatss.NewKeygen(params)
+key := <-kg.Done
+
+// Signing
+sig, err := key.NewSigning(msg, params)
+result := <-sig.Done // result.Signature is 64-byte Ed25519 signature
+
+// Re-sharing
+rs, err := eddsatss.NewResharing(resharingParams, oldKey)
+newKey := <-rs.Done
+```
+
+## Migration from Legacy API (v2.1 and earlier)
+
+The `ecdsa/keygen`, `ecdsa/signing`, `ecdsa/resharing`, `eddsa/keygen`, `eddsa/signing`, and `eddsa/resharing` packages are now **deprecated**. They still work but will not receive new features.
+
+| Legacy (deprecated) | Replacement |
+|---|---|
+| `ecdsa/keygen.NewLocalParty` | `ecdsatss.NewKeygen` |
+| `ecdsa/keygen.GeneratePreParams` | `ecdsatss.GeneratePreParams` |
+| `ecdsa/signing.NewLocalParty` | `ecdsatss.Key.NewSigning` |
+| `ecdsa/resharing.NewLocalParty` | `ecdsatss.NewResharing` |
+| `eddsa/keygen.NewLocalParty` | `eddsatss.NewKeygen` |
+| `eddsa/signing.NewLocalParty` | `eddsatss.Key.NewSigning` |
+| `eddsa/resharing.NewLocalParty` | `eddsatss.NewResharing` |
+
+Key differences:
+- **No channels**: Replace `outCh`/`endCh` with a `tss.MessageBroker` and `Done`/`Err` channels on the returned object.
+- **No `Start()`/`Update()` loop**: The protocol runs automatically via broker callbacks.
+- **No protobuf wire format**: Messages use JSON via `tss.JsonMessage`.
+- **Key data**: `ecdsatss.Key` and `eddsatss.Key` have the same fields as the old `LocalPartySaveData` structs.
+
+<details>
+<summary>Legacy API usage (deprecated)</summary>
+
+### Setup (Legacy)
+```go
+preParams, _ := keygen.GeneratePreParams(1 * time.Minute)
+parties := tss.SortPartyIDs(getParticipantPartyIDs())
+thisParty := tss.NewPartyID(id, moniker, uniqueKey)
+ctx := tss.NewPeerContext(parties)
+params := tss.NewParameters(tss.S256(), ctx, thisParty, len(parties), threshold)
+```
+
+### Keygen (Legacy)
+```go
+party := keygen.NewLocalParty(params, outCh, endCh, preParams)
 go func() {
     err := party.Start()
     // handle err ...
 }()
 ```
 
-### Signing
-Use the `signing.LocalParty` for signing and provide it with a `message` to sign. It requires the key data obtained from the keygen protocol. The signature will be sent through the `endCh` once completed.
-
-Please note that `t+1` signers are required to sign a message and for optimal usage no more than this should be involved. Each signer should have the same view of who the `t+1` signers are.
-
+### Signing (Legacy)
 ```go
 party := signing.NewLocalParty(message, params, ourKeyData, outCh, endCh)
 go func() {
@@ -98,11 +168,7 @@ go func() {
 }()
 ```
 
-### Re-Sharing
-Use the `resharing.LocalParty` to re-distribute the secret shares. The save data received through the `endCh` should overwrite the existing key data in storage, or write new data if the party is receiving a new share.
-
-Please note that `ReSharingParameters` is used to give this Party more context about the re-sharing that should be carried out.
-
+### Re-Sharing (Legacy)
 ```go
 party := resharing.NewLocalParty(params, ourKeyData, outCh, endCh)
 go func() {
@@ -111,32 +177,14 @@ go func() {
 }()
 ```
 
-⚠️ During re-sharing the key data may be modified during the rounds. Do not ever overwrite any data saved on disk until the final struct has been received through the `end` channel.
-
-## Messaging
-In these examples the `outCh` will collect outgoing messages from the party and the `endCh` will receive save data or a signature when the protocol is complete.
-
-During the protocol you should provide the party with updates received from other participating parties on the network.
-
-A `Party` has two thread-safe methods on it for receiving updates.
+### Messaging (Legacy)
 ```go
-// The main entry point when updating a party's state from the wire
-UpdateFromBytes(wireBytes []byte, from *tss.PartyID, isBroadcast bool) (ok bool, err error)
-// You may use this entry point to update a party's state when running locally or in tests
-Update(msg tss.ParsedMessage) (ok bool, err error)
+// Receiving updates from other parties
+party.UpdateFromBytes(wireBytes, from, isBroadcast)
+// Getting wire bytes from outgoing messages
+wireBytes, routing, err := msg.WireBytes()
 ```
-
-And a `tss.Message` has the following two methods for converting messages to data for the wire:
-```go
-// Returns the encoded message bytes to send over the wire along with routing information
-WireBytes() ([]byte, *tss.MessageRouting, error)
-// Returns the protobuf wrapper message struct, used only in some exceptional scenarios (i.e. mobile apps)
-WireMsg() *tss.MessageWrapper
-```
-
-In a typical use case, it is expected that a transport implementation will consume message bytes via the `out` channel of the local `Party`, send them to the destination(s) specified in the result of `msg.GetTo()`, and pass them to `UpdateFromBytes` on the receiving end.
-
-This way there is no need to deal with Marshal/Unmarshalling Protocol Buffers to implement a transport.
+</details>
 
 ## Changes of Preparams of ECDSA in v2.0
 
