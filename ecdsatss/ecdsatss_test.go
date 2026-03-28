@@ -324,3 +324,291 @@ func TestKeygenAndSign(t *testing.T) {
 
 	t.Log("All parties completed ECDSA signing with valid signature")
 }
+
+// --- Resharing Hub broker ---
+// Unlike the keygen hub, the resharing hub routes messages by PartyID KeyInt
+// because old and new committees have separate index spaces.
+
+type resharingBroker struct {
+	keyInt *big.Int // KeyInt of the party this broker belongs to
+	hub    *resharingHub
+	handlers map[string]tss.MessageReceiver
+	pending  map[string][]*tss.JsonMessage
+	mu       sync.Mutex
+}
+
+type resharingHub struct {
+	brokers map[string]*resharingBroker // keyed by hex(KeyInt)
+}
+
+func newResharingHub(allPartyIDs []*tss.PartyID) *resharingHub {
+	h := &resharingHub{
+		brokers: make(map[string]*resharingBroker, len(allPartyIDs)),
+	}
+	for _, pid := range allPartyIDs {
+		key := pid.KeyInt().Text(16)
+		h.brokers[key] = &resharingBroker{
+			keyInt:   pid.KeyInt(),
+			hub:      h,
+			handlers: make(map[string]tss.MessageReceiver),
+			pending:  make(map[string][]*tss.JsonMessage),
+		}
+	}
+	return h
+}
+
+func (h *resharingHub) brokerFor(pid *tss.PartyID) *resharingBroker {
+	return h.brokers[pid.KeyInt().Text(16)]
+}
+
+func (rb *resharingBroker) Connect(typ string, dest tss.MessageReceiver) {
+	rb.mu.Lock()
+	rb.handlers[typ] = dest
+	queued := rb.pending[typ]
+	delete(rb.pending, typ)
+	rb.mu.Unlock()
+
+	for _, msg := range queued {
+		if err := dest.Receive(msg); err != nil {
+			fmt.Printf("resharingBroker: error delivering queued message type %s: %v\n", typ, err)
+		}
+	}
+}
+
+func (rb *resharingBroker) Receive(msg *tss.JsonMessage) error {
+	// If from self, route to destination
+	if msg.From.KeyInt().Cmp(rb.keyInt) == 0 {
+		if msg.To != nil {
+			target := rb.hub.brokerFor(msg.To)
+			if target == nil {
+				return fmt.Errorf("resharingBroker: no broker for party %s", msg.To)
+			}
+			return target.Receive(msg)
+		}
+		// broadcast: send to all others
+		for _, broker := range rb.hub.brokers {
+			if broker.keyInt.Cmp(rb.keyInt) == 0 {
+				continue
+			}
+			if err := broker.Receive(msg); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	// Incoming message: deliver to handler
+	rb.mu.Lock()
+	handler, ok := rb.handlers[msg.Type]
+	if !ok {
+		rb.pending[msg.Type] = append(rb.pending[msg.Type], msg)
+		rb.mu.Unlock()
+		return nil
+	}
+	rb.mu.Unlock()
+	return handler.Receive(msg)
+}
+
+// --- ECDSA Resharing Integration Test ---
+
+func TestResharing(t *testing.T) {
+	const (
+		oldPartyCount = 3
+		oldThreshold  = 1
+		newPartyCount = 4
+		newThreshold  = 2
+	)
+
+	// Phase 1: Generate pre-params for old parties and run keygen
+	t.Log("Generating pre-parameters for old committee...")
+	oldPreParams := make([]LocalPreParams, oldPartyCount)
+	for i := 0; i < oldPartyCount; i++ {
+		pp, err := GeneratePreParams(5*time.Minute, 4)
+		require.NoError(t, err, "GeneratePreParams should not fail for old party %d", i)
+		oldPreParams[i] = *pp
+		t.Logf("Old party %d pre-params generated", i)
+	}
+
+	oldPIDs := tss.GenerateTestPartyIDs(oldPartyCount)
+	oldHub := newTestHub(oldPartyCount)
+	oldP2pCtx := tss.NewPeerContext(oldPIDs)
+
+	keygens := make([]*Keygen, oldPartyCount)
+	for i := 0; i < oldPartyCount; i++ {
+		params := tss.NewParameters(tss.S256(), oldP2pCtx, oldPIDs[i], oldPartyCount, oldThreshold)
+		params.SetBroker(oldHub.brokers[i])
+		params.SetNoProofMod()
+		params.SetNoProofFac()
+
+		kg, err := NewKeygen(params, oldPreParams[i])
+		require.NoError(t, err, "NewKeygen should not fail for old party %d", i)
+		keygens[i] = kg
+	}
+
+	oldKeys := make([]*Key, oldPartyCount)
+	for i := 0; i < oldPartyCount; i++ {
+		select {
+		case k := <-keygens[i].Done:
+			oldKeys[i] = k
+			t.Logf("Old party %d completed keygen", i)
+		case err := <-keygens[i].Err:
+			t.Fatalf("Old party %d keygen error: %v", i, err)
+		case <-time.After(5 * time.Minute):
+			t.Fatalf("Old party %d keygen timed out", i)
+		}
+	}
+
+	// Verify all old parties got the same public key
+	for i := 1; i < oldPartyCount; i++ {
+		require.True(t, oldKeys[0].ECDSAPub.Equals(oldKeys[i].ECDSAPub),
+			"old party 0 and old party %d should have the same public key", i)
+	}
+	origECDSAPub := oldKeys[0].ECDSAPub
+	t.Log("Old committee keygen completed successfully")
+
+	// Phase 2: Generate pre-params for new parties
+	t.Log("Generating pre-parameters for new committee...")
+	newPreParams := make([]LocalPreParams, newPartyCount)
+	for i := 0; i < newPartyCount; i++ {
+		pp, err := GeneratePreParams(5*time.Minute, 4)
+		require.NoError(t, err, "GeneratePreParams should not fail for new party %d", i)
+		newPreParams[i] = *pp
+		t.Logf("New party %d pre-params generated", i)
+	}
+
+	// Phase 3: Run resharing
+	// Generate new party IDs (no overlap with old)
+	newPIDs := tss.GenerateTestPartyIDs(newPartyCount)
+	// Offset new party IDs so they don't collide with old ones
+	// GenerateTestPartyIDs generates IDs starting from 0, so new ones start from oldPartyCount
+	// Actually, GenerateTestPartyIDs may generate different keys. Let's check.
+	// For safety, generate new IDs with an offset.
+	newPIDs = generateOffsetTestPartyIDs(newPartyCount, oldPartyCount)
+
+	newP2pCtx := tss.NewPeerContext(newPIDs)
+
+	// Create resharing hub with all parties
+	allPartyIDs := make([]*tss.PartyID, 0, oldPartyCount+newPartyCount)
+	allPartyIDs = append(allPartyIDs, oldPIDs...)
+	allPartyIDs = append(allPartyIDs, newPIDs...)
+	reshareHub := newResharingHub(allPartyIDs)
+
+	t.Log("Starting resharing protocol...")
+
+	resharings := make([]*Resharing, oldPartyCount+newPartyCount)
+
+	// Create old committee resharing parties
+	for i := 0; i < oldPartyCount; i++ {
+		params := tss.NewReSharingParameters(tss.S256(), oldP2pCtx, newP2pCtx, oldPIDs[i], oldPartyCount, oldThreshold, newPartyCount, newThreshold)
+		params.SetNoProofMod()
+		params.SetNoProofFac()
+		params.SetBroker(reshareHub.brokerFor(oldPIDs[i]))
+
+		rs, err := NewResharing(params, oldKeys[i])
+		require.NoError(t, err, "NewResharing should not fail for old party %d", i)
+		resharings[i] = rs
+	}
+
+	// Create new committee resharing parties
+	for i := 0; i < newPartyCount; i++ {
+		params := tss.NewReSharingParameters(tss.S256(), oldP2pCtx, newP2pCtx, newPIDs[i], oldPartyCount, oldThreshold, newPartyCount, newThreshold)
+		params.SetNoProofMod()
+		params.SetNoProofFac()
+		params.SetBroker(reshareHub.brokerFor(newPIDs[i]))
+
+		rs, err := NewResharing(params, nil, newPreParams[i])
+		require.NoError(t, err, "NewResharing should not fail for new party %d", i)
+		resharings[oldPartyCount+i] = rs
+	}
+
+	// Collect results
+	newKeys := make([]*Key, newPartyCount)
+	for i := 0; i < oldPartyCount+newPartyCount; i++ {
+		select {
+		case k := <-resharings[i].Done:
+			if i < oldPartyCount {
+				t.Logf("Old party %d completed resharing (Xi zeroed)", i)
+				// Old party's key should have Xi zeroed
+				assert.Equal(t, int64(0), k.Xi.Int64(), "old party %d Xi should be zeroed", i)
+			} else {
+				newIdx := i - oldPartyCount
+				newKeys[newIdx] = k
+				t.Logf("New party %d completed resharing", newIdx)
+			}
+		case err := <-resharings[i].Err:
+			if i < oldPartyCount {
+				t.Fatalf("Old party %d resharing error: %v", i, err)
+			} else {
+				t.Fatalf("New party %d resharing error: %v", i-oldPartyCount, err)
+			}
+		case <-time.After(5 * time.Minute):
+			if i < oldPartyCount {
+				t.Fatalf("Old party %d resharing timed out", i)
+			} else {
+				t.Fatalf("New party %d resharing timed out", i-oldPartyCount)
+			}
+		}
+	}
+
+	// Verify new committee has the same ECDSAPub
+	for i := 0; i < newPartyCount; i++ {
+		require.NotNil(t, newKeys[i], "new party %d key should not be nil", i)
+		assert.True(t, origECDSAPub.Equals(newKeys[i].ECDSAPub),
+			"new party %d should have the same ECDSAPub as the original", i)
+	}
+	t.Log("Resharing completed: new committee has same ECDSAPub")
+
+	// Phase 4: Sign with new committee
+	msgHash := sha256.Sum256([]byte("resharing test"))
+	msg := new(big.Int).SetBytes(msgHash[:])
+
+	signHub := newTestHub(newPartyCount)
+	signings := make([]*Signing, newPartyCount)
+	for i := 0; i < newPartyCount; i++ {
+		params := tss.NewParameters(tss.S256(), newP2pCtx, newPIDs[i], newPartyCount, newThreshold)
+		params.SetBroker(signHub.brokers[i])
+
+		sig, err := newKeys[i].NewSigning(msg, params)
+		require.NoError(t, err, "NewSigning should not fail for new party %d", i)
+		signings[i] = sig
+	}
+
+	sigDatas := make([]*SignatureData, newPartyCount)
+	for i := 0; i < newPartyCount; i++ {
+		select {
+		case sd := <-signings[i].Done:
+			sigDatas[i] = sd
+			t.Logf("New party %d completed signing", i)
+		case err := <-signings[i].Err:
+			t.Fatalf("New party %d signing error: %v", i, err)
+		case <-time.After(5 * time.Minute):
+			t.Fatalf("New party %d signing timed out", i)
+		}
+	}
+
+	// Verify ECDSA signature
+	r := new(big.Int).SetBytes(sigDatas[0].R)
+	sVal := new(big.Int).SetBytes(sigDatas[0].S)
+	pk := ecdsa.PublicKey{
+		Curve: tss.S256(),
+		X:     origECDSAPub.X(),
+		Y:     origECDSAPub.Y(),
+	}
+
+	ok := ecdsa.Verify(&pk, msgHash[:], r, sVal)
+	assert.True(t, ok, "ECDSA signature verification with reshared keys should succeed")
+
+	t.Log("Resharing + signing test completed successfully")
+}
+
+func generateOffsetTestPartyIDs(count, offset int) tss.SortedPartyIDs {
+	ids := make(tss.UnSortedPartyIDs, 0, count)
+	for i := 0; i < count; i++ {
+		ids = append(ids, tss.NewPartyID(
+			fmt.Sprintf("new-%d", i+offset),
+			fmt.Sprintf("new-moniker-%d", i+offset),
+			new(big.Int).SetInt64(int64(i+offset+1)*1000),
+		))
+	}
+	return tss.SortPartyIDs(ids)
+}
