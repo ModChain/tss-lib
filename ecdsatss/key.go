@@ -7,7 +7,10 @@ import (
 	"github.com/KarpelesLab/tss-lib/v2/crypto/paillier"
 )
 
-// Key represents the data for a local share of key
+// Key represents the data for a local share of key.
+//
+// Key is JSON-compatible with the old ecdsa/keygen.LocalPartySaveData struct,
+// so existing serialized key data can be deserialized directly into this type.
 type Key struct {
 	LocalPreParams
 	LocalSecrets
