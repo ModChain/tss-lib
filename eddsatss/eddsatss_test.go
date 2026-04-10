@@ -1,6 +1,7 @@
 package eddsatss
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/big"
@@ -8,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/KarpelesLab/edwards25519"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -305,6 +307,126 @@ func TestKeygenAndSign(t *testing.T) {
 	assert.Len(t, sigs[0].Signature, 64, "signature should be 64 bytes")
 
 	t.Logf("All parties completed signing, signature: %x", sigs[0].Signature)
+}
+
+// TestKeygenAndSignStrictSubset runs EdDSA keygen with 5 parties at threshold 2, then signs
+// with a non-contiguous 3-party subset {0, 2, 4}. Without SubsetForParties, Ks and BigXj
+// would stay keygen-indexed and Lagrange interpolation over the subset would use wrong x
+// coordinates, producing a signature that fails ed25519 verification.
+func TestKeygenAndSignStrictSubset(t *testing.T) {
+	const (
+		partyCount = 5
+		threshold  = 2 // t+1 = 3 signers
+	)
+
+	// --- Phase 1: Full 5-party keygen ---
+	pIDs := tss.GenerateTestPartyIDs(partyCount)
+	hub := newTestHub(partyCount)
+	p2pCtx := tss.NewPeerContext(pIDs)
+
+	keygens := make([]*Keygen, partyCount)
+	for i := 0; i < partyCount; i++ {
+		params := tss.NewParameters(tss.Edwards(), p2pCtx, pIDs[i], partyCount, threshold)
+		params.SetBroker(hub.brokers[i])
+
+		kg, err := NewKeygen(context.Background(), params)
+		require.NoError(t, err, "NewKeygen should not fail for party %d", i)
+		keygens[i] = kg
+	}
+
+	keys := make([]*Key, partyCount)
+	for i := 0; i < partyCount; i++ {
+		select {
+		case k := <-keygens[i].Done:
+			keys[i] = k
+		case err := <-keygens[i].Err:
+			t.Fatalf("Keygen error for party %d: %v", i, err)
+		case <-time.After(30 * time.Second):
+			t.Fatalf("Keygen timed out for party %d", i)
+		}
+	}
+	for i := 1; i < partyCount; i++ {
+		require.True(t, keys[0].EDDSAPub.Equals(keys[i].EDDSAPub),
+			"party 0 and party %d should share the same master pubkey", i)
+	}
+
+	// --- Phase 2: Build a strict 3-party signing subset from parties {0, 2, 4} ---
+	// Clone the PartyIDs so SortPartyIDs only writes Index fields on the clones and the
+	// original keygen pIDs stay intact.
+	selectedKeygenIdx := []int{0, 2, 4}
+	var subsetUnsorted tss.UnSortedPartyIDs
+	for _, k := range selectedKeygenIdx {
+		orig := pIDs[k]
+		clone := tss.NewPartyID(orig.Id, orig.Moniker, orig.KeyInt())
+		subsetUnsorted = append(subsetUnsorted, clone)
+	}
+	subsetSorted := tss.SortPartyIDs(subsetUnsorted)
+	require.Equal(t, 3, len(subsetSorted))
+	for i := range subsetSorted {
+		require.Equal(t, i, subsetSorted[i].Index, "subset party %d should be at index %d", i, i)
+	}
+	for i, orig := range pIDs {
+		require.Equal(t, i, orig.Index, "original keygen pID %d must not have been mutated", i)
+	}
+
+	subsetP2pCtx := tss.NewPeerContext(subsetSorted)
+
+	// Map each subset position to its corresponding keygen Key by matching Key bytes.
+	subsetKeys := make([]*Key, len(subsetSorted))
+	for i, subsetPID := range subsetSorted {
+		for k, origPID := range pIDs {
+			if bytes.Equal(origPID.Key, subsetPID.Key) {
+				subsetKeys[i] = keys[k]
+				break
+			}
+		}
+		require.NotNil(t, subsetKeys[i], "no keygen key found for subset party at index %d", i)
+	}
+
+	// --- Phase 3: Sign with the 3-party subset ---
+	msg := big.NewInt(0xBADC0FFEE)
+
+	signHub := newTestHub(len(subsetSorted))
+	signings := make([]*Signing, len(subsetSorted))
+	for i := 0; i < len(subsetSorted); i++ {
+		params := tss.NewParameters(tss.Edwards(), subsetP2pCtx, subsetSorted[i], len(subsetSorted), threshold)
+		params.SetBroker(signHub.brokers[i])
+
+		sg, err := subsetKeys[i].NewSigning(context.Background(), msg, params)
+		require.NoError(t, err, "NewSigning should not fail for subset party %d", i)
+		signings[i] = sg
+	}
+
+	sigs := make([]*SignatureData, len(subsetSorted))
+	for i := 0; i < len(subsetSorted); i++ {
+		select {
+		case sig := <-signings[i].Done:
+			sigs[i] = sig
+			t.Logf("Subset party %d completed signing", i)
+		case err := <-signings[i].Err:
+			t.Fatalf("Subset party %d signing error: %v", i, err)
+		case <-time.After(30 * time.Second):
+			t.Fatalf("Subset party %d signing timed out", i)
+		}
+	}
+
+	for i := 1; i < len(subsetSorted); i++ {
+		assert.Equal(t, sigs[0].Signature, sigs[i].Signature,
+			"subset party 0 and party %d should have the same signature", i)
+	}
+
+	// --- Phase 4: Verify the signature under the master keygen pubkey ---
+	pk := edwards25519.PublicKey{
+		Curve: tss.Edwards(),
+		X:     keys[0].EDDSAPub.X(),
+		Y:     keys[0].EDDSAPub.Y(),
+	}
+	parsed, err := edwards25519.ParseSignature(sigs[0].Signature)
+	require.NoError(t, err, "signature should parse")
+	ok := edwards25519.VerifyRS(&pk, msg.Bytes(), parsed.R, parsed.S)
+	assert.True(t, ok, "strict subset EdDSA signature must verify under the master keygen pubkey")
+
+	t.Logf("Strict subset EdDSA signature verified, sig: %x", sigs[0].Signature)
 }
 
 func TestResharing(t *testing.T) {

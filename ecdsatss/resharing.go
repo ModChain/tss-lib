@@ -128,31 +128,6 @@ func (rs *Resharing) getSSID() ([]byte, error) {
 	return ssid, nil
 }
 
-// buildSubsetKey creates a subset of the input key, re-indexed for the old party IDs.
-func (rs *Resharing) buildSubsetKey() *Key {
-	oldIDs := rs.params.OldParties().IDs()
-	keysToIndices := make(map[string]int, len(rs.input.Ks))
-	for j, kj := range rs.input.Ks {
-		keysToIndices[hex.EncodeToString(kj.Bytes())] = j
-	}
-	subset := NewKey(len(oldIDs))
-	subset.LocalPreParams = rs.input.LocalPreParams
-	subset.LocalSecrets = rs.input.LocalSecrets
-	subset.ECDSAPub = rs.input.ECDSAPub
-	for j, id := range oldIDs {
-		savedIdx, ok := keysToIndices[hex.EncodeToString(id.Key)]
-		if !ok {
-			panic("buildSubsetKey: unable to find a party in the local save data")
-		}
-		subset.Ks[j] = rs.input.Ks[savedIdx]
-		subset.NTildej[j] = rs.input.NTildej[savedIdx]
-		subset.H1j[j] = rs.input.H1j[savedIdx]
-		subset.H2j[j] = rs.input.H2j[savedIdx]
-		subset.BigXj[j] = rs.input.BigXj[savedIdx]
-		subset.PaillierPKs[j] = rs.input.PaillierPKs[savedIdx]
-	}
-	return subset
-}
 
 // prepareForSigning computes the Lagrange coefficient wi for the old committee member.
 func (rs *Resharing) prepareForSigning(subsetKey *Key) (*big.Int, error) {
@@ -195,8 +170,12 @@ func (rs *Resharing) prepareForSigning(subsetKey *Key) (*big.Int, error) {
 func (rs *Resharing) round1Old() error {
 	Pi := rs.params.PartyID()
 
-	// Build subset of key for the old committee
-	subsetKey := rs.buildSubsetKey()
+	// Reindex rs.input against the old committee so every per-party slice lookup below
+	// uses old-committee indices rather than keygen-party indices.
+	subsetKey, err := rs.input.SubsetForParties(rs.params.OldParties().IDs())
+	if err != nil {
+		return fmt.Errorf("SubsetForParties: %w", err)
+	}
 	rs.input = subsetKey
 
 	// Compute SSID

@@ -1,6 +1,7 @@
 package ecdsatss
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
@@ -482,6 +483,141 @@ func TestKeygenAndSignWithKDD(t *testing.T) {
 	nilSig, err := keys[0].NewSigningWithKDD(context.Background(), msg, params, nil)
 	require.NoError(t, err, "NewSigningWithKDD(nil) must fall through to NewSigning without error")
 	require.NotNil(t, nilSig, "NewSigningWithKDD(nil) must return a non-nil *Signing")
+}
+
+// TestKeygenAndSignStrictSubset exercises the bug where the signing committee is a strict,
+// non-contiguous subset of the keygen parties. With 4 keygen parties and threshold=1 (t+1=2),
+// picking parties {0, 2} forces the new party P2 to move from keygen index 2 to signing
+// index 1 — the signing code must reindex Ks/NTildej/H1j/H2j/BigXj/PaillierPKs via
+// SubsetForParties, or Lagrange interpolation and MTA lookups will use wrong slots.
+func TestKeygenAndSignStrictSubset(t *testing.T) {
+	const (
+		partyCount = 4
+		threshold  = 1 // t+1 = 2 signers
+	)
+
+	// --- Phase 1: Full 4-party keygen ---
+	t.Log("Generating pre-parameters for all parties...")
+	preParams := make([]LocalPreParams, partyCount)
+	for i := 0; i < partyCount; i++ {
+		pp, err := GeneratePreParams(5*time.Minute, 4)
+		require.NoError(t, err, "GeneratePreParams should not fail for party %d", i)
+		preParams[i] = *pp
+		t.Logf("Party %d pre-params generated", i)
+	}
+
+	pIDs := tss.GenerateTestPartyIDs(partyCount)
+	hub := newTestHub(partyCount)
+	p2pCtx := tss.NewPeerContext(pIDs)
+
+	keygens := make([]*Keygen, partyCount)
+	for i := 0; i < partyCount; i++ {
+		params := tss.NewParameters(tss.S256(), p2pCtx, pIDs[i], partyCount, threshold)
+		params.SetBroker(hub.brokers[i])
+		params.SetNoProofMod()
+		params.SetNoProofFac()
+
+		kg, err := NewKeygen(context.Background(), params, preParams[i])
+		require.NoError(t, err, "NewKeygen should not fail for party %d", i)
+		keygens[i] = kg
+	}
+
+	keys := make([]*Key, partyCount)
+	for i := 0; i < partyCount; i++ {
+		select {
+		case k := <-keygens[i].Done:
+			keys[i] = k
+		case err := <-keygens[i].Err:
+			t.Fatalf("Party %d keygen error: %v", i, err)
+		case <-time.After(5 * time.Minute):
+			t.Fatalf("Party %d keygen timed out", i)
+		}
+	}
+	for i := 1; i < partyCount; i++ {
+		require.True(t, keys[0].ECDSAPub.Equals(keys[i].ECDSAPub),
+			"party 0 and party %d should have the same public key", i)
+	}
+	t.Log("Keygen completed for all 4 parties")
+
+	// --- Phase 2: Build a strict 2-party signing subset from parties {0, 2} ---
+	// Clone the PartyIDs via tss.NewPartyID so that SortPartyIDs below only assigns
+	// indices on the clones; the original keygen pIDs stay intact.
+	selectedKeygenIdx := []int{0, 2}
+	var subsetUnsorted tss.UnSortedPartyIDs
+	for _, k := range selectedKeygenIdx {
+		orig := pIDs[k]
+		clone := tss.NewPartyID(orig.Id, orig.Moniker, orig.KeyInt())
+		subsetUnsorted = append(subsetUnsorted, clone)
+	}
+	subsetSorted := tss.SortPartyIDs(subsetUnsorted)
+	require.Equal(t, 2, len(subsetSorted))
+	require.Equal(t, 0, subsetSorted[0].Index, "subset party 0 should be at index 0")
+	require.Equal(t, 1, subsetSorted[1].Index, "subset party 1 should be at index 1")
+
+	// Safety: the originals must still report their keygen indices.
+	for i, orig := range pIDs {
+		require.Equal(t, i, orig.Index, "original keygen pID %d must not have been mutated", i)
+	}
+
+	subsetP2pCtx := tss.NewPeerContext(subsetSorted)
+
+	// Map each subset position to its corresponding keygen Key by matching Key bytes.
+	subsetKeys := make([]*Key, len(subsetSorted))
+	for i, subsetPID := range subsetSorted {
+		for k, origPID := range pIDs {
+			if bytes.Equal(origPID.Key, subsetPID.Key) {
+				subsetKeys[i] = keys[k]
+				break
+			}
+		}
+		require.NotNil(t, subsetKeys[i], "no keygen key found for subset party at index %d", i)
+	}
+
+	// --- Phase 3: Sign with the 2-party subset ---
+	msgHash := sha256.Sum256([]byte("strict subset signing"))
+	msg := new(big.Int).SetBytes(msgHash[:])
+
+	signHub := newTestHub(len(subsetSorted))
+
+	signings := make([]*Signing, len(subsetSorted))
+	for i := 0; i < len(subsetSorted); i++ {
+		params := tss.NewParameters(tss.S256(), subsetP2pCtx, subsetSorted[i], len(subsetSorted), threshold)
+		params.SetBroker(signHub.brokers[i])
+
+		sig, err := subsetKeys[i].NewSigning(context.Background(), msg, params)
+		require.NoError(t, err, "NewSigning should not fail for subset party %d", i)
+		signings[i] = sig
+	}
+
+	sigDatas := make([]*SignatureData, len(subsetSorted))
+	for i := 0; i < len(subsetSorted); i++ {
+		select {
+		case sd := <-signings[i].Done:
+			sigDatas[i] = sd
+			t.Logf("Subset party %d completed signing", i)
+		case err := <-signings[i].Err:
+			t.Fatalf("Subset party %d signing error: %v", i, err)
+		case <-time.After(5 * time.Minute):
+			t.Fatalf("Subset party %d signing timed out", i)
+		}
+	}
+
+	for i := 1; i < len(subsetSorted); i++ {
+		assert.Equal(t, sigDatas[0].R, sigDatas[i].R, "R mismatch between subset parties")
+		assert.Equal(t, sigDatas[0].S, sigDatas[i].S, "S mismatch between subset parties")
+	}
+
+	// --- Phase 4: Verify under the original master pubkey ---
+	r := new(big.Int).SetBytes(sigDatas[0].R)
+	sVal := new(big.Int).SetBytes(sigDatas[0].S)
+	pk := ecdsa.PublicKey{
+		Curve: tss.S256(),
+		X:     keys[0].ECDSAPub.X(),
+		Y:     keys[0].ECDSAPub.Y(),
+	}
+	ok := ecdsa.Verify(&pk, msgHash[:], r, sVal)
+	assert.True(t, ok, "subset signature must verify under the master keygen pubkey")
+	t.Log("Strict subset signature verified under master pubkey")
 }
 
 // --- Resharing Hub broker ---

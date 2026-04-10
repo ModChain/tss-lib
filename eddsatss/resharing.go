@@ -63,6 +63,15 @@ func (rs *Resharing) round1Old() error {
 	i := Pi.Index
 	ec := rs.params.EC()
 
+	// The input key's Ks/BigXj are indexed by the original keygen party order, but the old
+	// committee may be a strict subset of those parties. Reindex against OldParties so every
+	// subsequent rs.input.* access is old-committee-indexed.
+	subset, err := rs.input.SubsetForParties(rs.params.OldParties().IDs())
+	if err != nil {
+		return fmt.Errorf("SubsetForParties: %w", err)
+	}
+	rs.input = subset
+
 	// 1. PrepareForSigning() -> wi
 	xi := rs.input.Xi
 	ks := rs.input.Ks

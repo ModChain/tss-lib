@@ -1,10 +1,13 @@
 package ecdsatss
 
 import (
+	"encoding/hex"
+	"fmt"
 	"math/big"
 
 	"github.com/KarpelesLab/tss-lib/v2/crypto"
 	"github.com/KarpelesLab/tss-lib/v2/crypto/paillier"
+	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
 
 // Key represents the data for a local share of key.
@@ -65,4 +68,39 @@ func (preParams LocalPreParams) ValidateWithProof() bool {
 		preParams.Beta != nil &&
 		preParams.P != nil &&
 		preParams.Q != nil
+}
+
+// SubsetForParties returns a new Key whose per-party slice fields (Ks, NTildej, H1j, H2j,
+// BigXj, PaillierPKs) are reordered to match the given sorted party IDs. Parties are matched
+// by their ShareID — i.e. the Ks value stored by keygen, compared to PartyID.Key.
+//
+// This reindexing is required whenever the current party set is a strict subset of the
+// parties that participated in keygen (for example, a t+1 signing committee picked out of
+// an n-party keygen, or resharing's old committee). The signing and resharing rounds index
+// these slices by the current-party index, so the slices must be in current-party order.
+//
+// The returned Key shares LocalPreParams, LocalSecrets, and ECDSAPub with the receiver;
+// only the per-party slices are rebuilt.
+func (key *Key) SubsetForParties(sortedIDs tss.SortedPartyIDs) (*Key, error) {
+	keysToIndices := make(map[string]int, len(key.Ks))
+	for j, kj := range key.Ks {
+		keysToIndices[hex.EncodeToString(kj.Bytes())] = j
+	}
+	subset := NewKey(len(sortedIDs))
+	subset.LocalPreParams = key.LocalPreParams
+	subset.LocalSecrets = key.LocalSecrets
+	subset.ECDSAPub = key.ECDSAPub
+	for j, id := range sortedIDs {
+		savedIdx, ok := keysToIndices[hex.EncodeToString(id.Key)]
+		if !ok {
+			return nil, fmt.Errorf("SubsetForParties: party %s not found in keygen save data", id)
+		}
+		subset.Ks[j] = key.Ks[savedIdx]
+		subset.NTildej[j] = key.NTildej[savedIdx]
+		subset.H1j[j] = key.H1j[savedIdx]
+		subset.H2j[j] = key.H2j[savedIdx]
+		subset.BigXj[j] = key.BigXj[savedIdx]
+		subset.PaillierPKs[j] = key.PaillierPKs[savedIdx]
+	}
+	return subset, nil
 }

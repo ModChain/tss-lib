@@ -34,19 +34,26 @@ type Signing struct {
 }
 
 // NewSigning creates a new Signing instance and kicks off round 1 of the EdDSA signing protocol.
+//
+// The receiver key may have been produced by a keygen that involved more parties than the
+// current signing committee; NewSigning transparently reindexes Ks and BigXj to match
+// params.Parties().IDs() via SubsetForParties, so callers can pass the full keygen key as-is.
 func (key *Key) NewSigning(ctx context.Context, msg *big.Int, params *tss.Parameters) (*Signing, error) {
+	subsetKey, err := key.SubsetForParties(params.Parties().IDs())
+	if err != nil {
+		return nil, err
+	}
 	partyCount := params.PartyCount()
 	s := &Signing{
 		ctx:    ctx,
 		params: params,
-		key:    key,
+		key:    subsetKey,
 		msg:    msg,
 		cjs:    make([]*big.Int, partyCount),
 		Done:   make(chan *SignatureData, 1),
 		Err:    make(chan error, 1),
 	}
-	err := s.round1()
-	if err != nil {
+	if err := s.round1(); err != nil {
 		return nil, err
 	}
 	return s, nil
