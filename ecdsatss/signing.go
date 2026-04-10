@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"slices"
 	"sync"
 	"sync/atomic"
 
@@ -106,6 +107,45 @@ func (key *Key) NewSigning(ctx context.Context, msg *big.Int, params *tss.Parame
 		return nil, err
 	}
 	return s, nil
+}
+
+// NewSigningWithKDD is a drop-in replacement for NewSigning that signs under a BIP32-derived
+// child key. The master key is left untouched: a clone is shifted by keyDerivationDelta and
+// then signed with. ECDSAPub and every BigXj[j] are offset by delta·G, and the local share Xi
+// has delta added modulo the curve order — the threshold signature will verify under the
+// derived child public key (master.ECDSAPub + delta·G).
+//
+// A nil keyDerivationDelta short-circuits to NewSigning.
+func (key *Key) NewSigningWithKDD(ctx context.Context, msg *big.Int, params *tss.Parameters, keyDerivationDelta *big.Int) (*Signing, error) {
+	if keyDerivationDelta == nil {
+		return key.NewSigning(ctx, msg, params)
+	}
+
+	keyClone := *key
+	keyClone.BigXj = slices.Clone(key.BigXj)
+
+	deltaG := crypto.ScalarBaseMult(key.ECDSAPub.Curve(), keyDerivationDelta)
+
+	newPub, err := deltaG.Add(key.ECDSAPub)
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive child ECDSAPub: %w", err)
+	}
+	keyClone.ECDSAPub = newPub
+
+	// Adding delta to the shared secret shifts every Shamir share by the same delta,
+	// so BigXj[j] becomes BigXj[j] + delta·G for every party.
+	for j := range keyClone.BigXj {
+		shifted, err := key.BigXj[j].Add(deltaG)
+		if err != nil {
+			return nil, fmt.Errorf("failed to shift BigXj[%d]: %w", j, err)
+		}
+		keyClone.BigXj[j] = shifted
+	}
+
+	modQ := common.ModInt(params.EC().Params().N)
+	keyClone.Xi = modQ.Add(keyDerivationDelta, key.Xi)
+
+	return (&keyClone).NewSigning(ctx, msg, params)
 }
 
 // getSSID returns ssid from local params, including BigXj and NTilde/h1/h2 in the hash.

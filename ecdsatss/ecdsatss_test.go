@@ -3,6 +3,7 @@ package ecdsatss
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/rand"
 	"crypto/sha256"
 	"fmt"
 	"math/big"
@@ -10,9 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/KarpelesLab/secp256k1/ecckd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/KarpelesLab/tss-lib/v2/crypto/ckd"
 	"github.com/KarpelesLab/tss-lib/v2/crypto/paillier"
 	"github.com/KarpelesLab/tss-lib/v2/tss"
 )
@@ -324,6 +327,161 @@ func TestKeygenAndSign(t *testing.T) {
 	assert.True(t, ok, "ECDSA signature verification should succeed")
 
 	t.Log("All parties completed ECDSA signing with valid signature")
+}
+
+func TestKeygenAndSignWithKDD(t *testing.T) {
+	const (
+		partyCount = 3
+		threshold  = 1
+	)
+
+	// --- Phase 1: Pre-params + keygen (same shape as TestKeygenAndSign) ---
+	t.Log("Generating pre-parameters for all parties...")
+	preParams := make([]LocalPreParams, partyCount)
+	for i := 0; i < partyCount; i++ {
+		pp, err := GeneratePreParams(5*time.Minute, 4)
+		require.NoError(t, err, "GeneratePreParams should not fail for party %d", i)
+		preParams[i] = *pp
+		t.Logf("Party %d pre-params generated", i)
+	}
+
+	pIDs := tss.GenerateTestPartyIDs(partyCount)
+	hub := newTestHub(partyCount)
+	p2pCtx := tss.NewPeerContext(pIDs)
+
+	keygens := make([]*Keygen, partyCount)
+	for i := 0; i < partyCount; i++ {
+		params := tss.NewParameters(tss.S256(), p2pCtx, pIDs[i], partyCount, threshold)
+		params.SetBroker(hub.brokers[i])
+		params.SetNoProofMod()
+		params.SetNoProofFac()
+
+		kg, err := NewKeygen(context.Background(), params, preParams[i])
+		require.NoError(t, err, "NewKeygen should not fail for party %d", i)
+		keygens[i] = kg
+	}
+
+	keys := make([]*Key, partyCount)
+	for i := 0; i < partyCount; i++ {
+		select {
+		case k := <-keygens[i].Done:
+			keys[i] = k
+			t.Logf("Party %d completed keygen", i)
+		case err := <-keygens[i].Err:
+			t.Fatalf("Party %d keygen error: %v", i, err)
+		case <-time.After(5 * time.Minute):
+			t.Fatalf("Party %d keygen timed out", i)
+		}
+	}
+
+	for i := 1; i < partyCount; i++ {
+		require.True(t, keys[0].ECDSAPub.Equals(keys[i].ECDSAPub),
+			"party 0 and party %d should have the same public key", i)
+	}
+	t.Log("Keygen completed successfully")
+
+	// --- Phase 2: Derive child key via BIP32 path ---
+	chainCode := make([]byte, 32)
+	_, err := rand.Read(chainCode)
+	require.NoError(t, err, "chain code rand should succeed")
+
+	parentExt := &ckd.ExtendedKey{
+		PublicKey: ecdsa.PublicKey{
+			Curve: tss.S256(),
+			X:     keys[0].ECDSAPub.X(),
+			Y:     keys[0].ECDSAPub.Y(),
+		},
+		Depth:      0,
+		ChildIndex: 0,
+		ChainCode:  chainCode,
+		ParentFP:   []byte{0, 0, 0, 0},
+		Version:    ecckd.BitcoinMainnetPrivate,
+	}
+
+	delta, childExt, err := ckd.DeriveChildKeyFromHierarchy(
+		[]uint32{12, 209, 3},
+		parentExt,
+		tss.S256().Params().N,
+		tss.S256(),
+	)
+	require.NoError(t, err, "child key derivation should succeed")
+	require.NotNil(t, delta)
+	require.NotNil(t, childExt)
+
+	// Snapshot the master pubkey so we can assert it was not mutated.
+	masterX := new(big.Int).Set(keys[0].ECDSAPub.X())
+	masterY := new(big.Int).Set(keys[0].ECDSAPub.Y())
+	masterXi := new(big.Int).Set(keys[0].Xi)
+
+	// --- Phase 3: Signing under the derived child key ---
+	msgHash := sha256.Sum256([]byte("hello hd world"))
+	msg := new(big.Int).SetBytes(msgHash[:])
+
+	signHub := newTestHub(partyCount)
+
+	signings := make([]*Signing, partyCount)
+	for i := 0; i < partyCount; i++ {
+		params := tss.NewParameters(tss.S256(), p2pCtx, pIDs[i], partyCount, threshold)
+		params.SetBroker(signHub.brokers[i])
+
+		sig, err := keys[i].NewSigningWithKDD(context.Background(), msg, params, delta)
+		require.NoError(t, err, "NewSigningWithKDD should not fail for party %d", i)
+		signings[i] = sig
+	}
+
+	sigDatas := make([]*SignatureData, partyCount)
+	for i := 0; i < partyCount; i++ {
+		select {
+		case sd := <-signings[i].Done:
+			sigDatas[i] = sd
+			t.Logf("Party %d completed signing", i)
+		case err := <-signings[i].Err:
+			t.Fatalf("Party %d signing error: %v", i, err)
+		case <-time.After(5 * time.Minute):
+			t.Fatalf("Party %d signing timed out", i)
+		}
+	}
+
+	for i := 1; i < partyCount; i++ {
+		assert.Equal(t, sigDatas[0].R, sigDatas[i].R, "party 0 and party %d should have the same R", i)
+		assert.Equal(t, sigDatas[0].S, sigDatas[i].S, "party 0 and party %d should have the same S", i)
+	}
+
+	// --- Phase 4: Verify against the derived child pubkey, not the master ---
+	r := new(big.Int).SetBytes(sigDatas[0].R)
+	sVal := new(big.Int).SetBytes(sigDatas[0].S)
+
+	childPk := ecdsa.PublicKey{
+		Curve: tss.S256(),
+		X:     childExt.PublicKey.X,
+		Y:     childExt.PublicKey.Y,
+	}
+	okChild := ecdsa.Verify(&childPk, msgHash[:], r, sVal)
+	assert.True(t, okChild, "signature must verify under the derived child pubkey")
+
+	// Signing should NOT verify under the master pubkey (sanity check that the delta was applied).
+	masterPk := ecdsa.PublicKey{
+		Curve: tss.S256(),
+		X:     masterX,
+		Y:     masterY,
+	}
+	okMaster := ecdsa.Verify(&masterPk, msgHash[:], r, sVal)
+	assert.False(t, okMaster, "signature must NOT verify under the master pubkey")
+
+	// Assert the master Key was not mutated by NewSigningWithKDD.
+	assert.Equal(t, 0, keys[0].ECDSAPub.X().Cmp(masterX), "master ECDSAPub.X must be untouched")
+	assert.Equal(t, 0, keys[0].ECDSAPub.Y().Cmp(masterY), "master ECDSAPub.Y must be untouched")
+	assert.Equal(t, 0, keys[0].Xi.Cmp(masterXi), "master Xi must be untouched")
+
+	t.Log("ECDSA KDD signing test done.")
+
+	// --- Phase 5: Nil-delta passthrough guard ---
+	nilHub := newTestHub(partyCount)
+	params := tss.NewParameters(tss.S256(), p2pCtx, pIDs[0], partyCount, threshold)
+	params.SetBroker(nilHub.brokers[0])
+	nilSig, err := keys[0].NewSigningWithKDD(context.Background(), msg, params, nil)
+	require.NoError(t, err, "NewSigningWithKDD(nil) must fall through to NewSigning without error")
+	require.NotNil(t, nilSig, "NewSigningWithKDD(nil) must return a non-nil *Signing")
 }
 
 // --- Resharing Hub broker ---
