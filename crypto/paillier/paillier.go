@@ -80,6 +80,14 @@ var (
 
 // len is the length of the modulus (each prime = len / 2)
 func GenerateKeyPair(ctx context.Context, rand io.Reader, modulusBitLen int, optionalConcurrency ...int) (privateKey *PrivateKey, publicKey *PublicKey, err error) {
+	return GenerateKeyPairFn(ctx, rand, modulusBitLen, nil, optionalConcurrency...)
+}
+
+// GenerateKeyPairFn is like GenerateKeyPair but invokes onFound (if non-nil)
+// each time one of the internal safe primes is accepted. It fires at least
+// twice per successful call (once per prime) and may fire additional times if
+// the |P-Q| rejection check forces a retry.
+func GenerateKeyPairFn(ctx context.Context, rand io.Reader, modulusBitLen int, onFound func(), optionalConcurrency ...int) (privateKey *PrivateKey, publicKey *PublicKey, err error) {
 	var concurrency int
 	if 0 < len(optionalConcurrency) {
 		if 1 < len(optionalConcurrency) {
@@ -95,7 +103,7 @@ func GenerateKeyPair(ctx context.Context, rand io.Reader, modulusBitLen int, opt
 	{
 		tmp := new(big.Int)
 		for {
-			sgps, err := common.GetRandomSafePrimesConcurrent(ctx, modulusBitLen/2, 2, concurrency, rand)
+			sgps, err := common.GetRandomSafePrimesConcurrentFn(ctx, modulusBitLen/2, 2, concurrency, rand, onFound)
 			if err != nil {
 				return nil, nil, err
 			}

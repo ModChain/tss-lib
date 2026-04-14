@@ -7,6 +7,7 @@ import (
 	"io"
 	"math/big"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/KarpelesLab/tss-lib/v2/common"
@@ -26,9 +27,21 @@ const (
 
 // LocalPreGenerator configures and generates pre-parameters for the ECDSA TSS protocol.
 type LocalPreGenerator struct {
-	context.Context           // Context used to stop generation if needed
-	Rand            io.Reader // reader used for random, defaults to rand.Reader if nil
-	Concurrency     int       // concurrency, defaults to runtime.NumCPU() if nil
+	context.Context                                // Context used to stop generation if needed
+	Rand            io.Reader                      // reader used for random, defaults to rand.Reader if nil
+	Concurrency     int                            // concurrency, defaults to runtime.NumCPU() if nil
+	Progress        func(p PreParamsProgress)      // optional; invoked as safe primes are found. Safe to be nil.
+}
+
+// PreParamsProgress reports progress of pre-parameter generation.
+// Generate finds 4 safe primes total (2 for the Paillier key, 2 for NTilde);
+// SafePrimesFound increases monotonically from 0 to SafePrimesTotal as each
+// prime is accepted. Rejected Paillier candidates (when |P-Q| is too small)
+// do not decrement the counter.
+type PreParamsProgress struct {
+	SafePrimesFound int           // number of safe primes accepted so far (0..SafePrimesTotal)
+	SafePrimesTotal int           // always 4
+	Elapsed         time.Duration // time since Generate started
 }
 
 // GeneratePreParams finds two safe primes and computes the Paillier secret required for the protocol.
@@ -74,6 +87,50 @@ func (g *LocalPreGenerator) Generate() (*LocalPreParams, error) {
 		concurrency = 1
 	}
 
+	// progress tracking: 4 safe primes total, 2 per branch. Paillier's |P-Q|
+	// rejection loop can emit more than 2 callbacks; we cap each branch's
+	// contribution at 2 so the reported count stays within [0, total].
+	const (
+		paillierBranchPrimes = 2
+		ntildeBranchPrimes   = 2
+		totalSafePrimes      = paillierBranchPrimes + ntildeBranchPrimes
+	)
+	var (
+		progressMu      sync.Mutex
+		paillierCount   int
+		ntildeCount     int
+		started         = time.Now()
+	)
+	report := func() {
+		if g == nil || g.Progress == nil {
+			return
+		}
+		progressMu.Lock()
+		found := paillierCount + ntildeCount
+		progressMu.Unlock()
+		g.Progress(PreParamsProgress{
+			SafePrimesFound: found,
+			SafePrimesTotal: totalSafePrimes,
+			Elapsed:         time.Since(started),
+		})
+	}
+	paillierOnFound := func() {
+		progressMu.Lock()
+		if paillierCount < paillierBranchPrimes {
+			paillierCount++
+		}
+		progressMu.Unlock()
+		report()
+	}
+	ntildeOnFound := func() {
+		progressMu.Lock()
+		if ntildeCount < ntildeBranchPrimes {
+			ntildeCount++
+		}
+		progressMu.Unlock()
+		report()
+	}
+
 	// prepare for concurrent Paillier and safe prime generation
 	paiCh := make(chan *paillier.PrivateKey, 1)
 	sgpCh := make(chan []*common.GermainSafePrime, 1)
@@ -81,7 +138,7 @@ func (g *LocalPreGenerator) Generate() (*LocalPreParams, error) {
 	// 4. generate Paillier public key E_i, private key and proof
 	go func(ch chan<- *paillier.PrivateKey) {
 		// more concurrency weight is assigned here because the paillier primes have a requirement of having "large" P-Q
-		PiPaillierSk, _, err := paillier.GenerateKeyPair(g.getContext(), g.getRand(), paillierModulusLen, concurrency*2)
+		PiPaillierSk, _, err := paillier.GenerateKeyPairFn(g.getContext(), g.getRand(), paillierModulusLen, paillierOnFound, concurrency*2)
 		if err != nil {
 			ch <- nil
 			return
@@ -92,7 +149,7 @@ func (g *LocalPreGenerator) Generate() (*LocalPreParams, error) {
 	// 5-7. generate safe primes for ZKPs used later on
 	go func(ch chan<- []*common.GermainSafePrime) {
 		var err error
-		sgps, err := common.GetRandomSafePrimesConcurrent(g.getContext(), safePrimeBitLen, 2, concurrency, g.getRand())
+		sgps, err := common.GetRandomSafePrimesConcurrentFn(g.getContext(), safePrimeBitLen, 2, concurrency, g.getRand(), ntildeOnFound)
 		if err != nil {
 			ch <- nil
 			return

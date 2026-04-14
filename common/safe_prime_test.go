@@ -11,6 +11,7 @@ import (
 	"crypto/rand"
 	"math/big"
 	"runtime"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -53,4 +54,27 @@ func TestGetRandomGermainPrimeConcurrent(t *testing.T) {
 		assert.NotNil(t, sgp)
 		assert.True(t, sgp.Validate())
 	}
+}
+
+func TestGetRandomSafePrimesConcurrentFn_Callback(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	const numPrimes = 3
+	var calls int32
+	sgps, err := GetRandomSafePrimesConcurrentFn(ctx, 64, numPrimes, runtime.NumCPU(), rand.Reader, func() {
+		atomic.AddInt32(&calls, 1)
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, numPrimes, len(sgps))
+	assert.EqualValues(t, numPrimes, atomic.LoadInt32(&calls), "onFound should fire once per accepted prime")
+}
+
+func TestGetRandomSafePrimesConcurrentFn_NilCallback(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sgps, err := GetRandomSafePrimesConcurrentFn(ctx, 64, 2, runtime.NumCPU(), rand.Reader, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(sgps))
 }

@@ -129,6 +129,14 @@ var ErrGeneratorCancelled = fmt.Errorf("generator work cancelled")
 // generated safe prime, the two most significant bits are always set to `1`
 // - we don't want the generated number to be too small.
 func GetRandomSafePrimesConcurrent(ctx context.Context, bitLen, numPrimes int, concurrency int, rand io.Reader) ([]*GermainSafePrime, error) {
+	return GetRandomSafePrimesConcurrentFn(ctx, bitLen, numPrimes, concurrency, rand, nil)
+}
+
+// GetRandomSafePrimesConcurrentFn is like GetRandomSafePrimesConcurrent but
+// invokes onFound (if non-nil) each time a safe prime is accepted. onFound may
+// be called from any goroutine; callers must serialize access to shared state
+// themselves.
+func GetRandomSafePrimesConcurrentFn(ctx context.Context, bitLen, numPrimes int, concurrency int, rand io.Reader, onFound func()) ([]*GermainSafePrime, error) {
 	if bitLen < 6 {
 		return nil, errors.New("safe prime size must be at least 6 bits")
 	}
@@ -161,6 +169,9 @@ func GetRandomSafePrimesConcurrent(ctx context.Context, bitLen, numPrimes int, c
 		select {
 		case result := <-primeCh:
 			primes = append(primes, result)
+			if onFound != nil {
+				onFound()
+			}
 			if atomic.AddInt32(&needed, -1) <= 0 {
 				return primes[:numPrimes], nil
 			}
