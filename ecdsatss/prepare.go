@@ -27,10 +27,10 @@ const (
 
 // LocalPreGenerator configures and generates pre-parameters for the ECDSA TSS protocol.
 type LocalPreGenerator struct {
-	context.Context                                // Context used to stop generation if needed
-	Rand            io.Reader                      // reader used for random, defaults to rand.Reader if nil
-	Concurrency     int                            // concurrency, defaults to runtime.NumCPU() if nil
-	Progress        func(p PreParamsProgress)      // optional; invoked as safe primes are found. Safe to be nil.
+	context.Context                           // Context used to stop generation if needed
+	Rand            io.Reader                 // reader used for random, defaults to rand.Reader if nil
+	Concurrency     int                       // concurrency, defaults to runtime.NumCPU() if nil
+	Progress        func(p PreParamsProgress) // optional; invoked as safe primes are found. Safe to be nil.
 }
 
 // PreParamsProgress reports progress of pre-parameter generation.
@@ -96,10 +96,10 @@ func (g *LocalPreGenerator) Generate() (*LocalPreParams, error) {
 		totalSafePrimes      = paillierBranchPrimes + ntildeBranchPrimes
 	)
 	var (
-		progressMu      sync.Mutex
-		paillierCount   int
-		ntildeCount     int
-		started         = time.Now()
+		progressMu    sync.Mutex
+		paillierCount int
+		ntildeCount   int
+		started       = time.Now()
 	)
 	report := func() {
 		if g == nil || g.Progress == nil {

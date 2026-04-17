@@ -72,10 +72,10 @@ func TrustedDealerKeygen44(seed [32]byte, params *ThresholdParams44) (*PublicKey
 		var s1 [mldsa.L44]mldsa.RingElement
 		var s2 [mldsa.K44]mldsa.RingElement
 		for j := 0; j < mldsa.L44; j++ {
-			s1[j] = mldsa.SampleBoundedEta2(sSeed[:], uint16(j))
+			s1[j] = mldsa.SampleBoundedPoly(sSeed[:], mldsa.Eta2, uint16(j))
 		}
 		for j := 0; j < mldsa.K44; j++ {
-			s2[j] = mldsa.SampleBoundedEta2(sSeed[:], uint16(j+mldsa.L44))
+			s2[j] = mldsa.SampleBoundedPoly(sSeed[:], mldsa.Eta2, uint16(j+mldsa.L44))
 		}
 		share := &Share44{S1: s1, S2: s2}
 		for j := 0; j < mldsa.L44; j++ {
@@ -87,10 +87,10 @@ func TrustedDealerKeygen44(seed [32]byte, params *ThresholdParams44) (*PublicKey
 
 		// Aggregate into s1h and s2 (plain) for pk computation.
 		for j := 0; j < mldsa.L44; j++ {
-			s1hTotal[j] = mldsa.NttAdd(s1hTotal[j], share.S1h[j])
+			s1hTotal[j] = mldsa.PolyAdd(s1hTotal[j], share.S1h[j])
 		}
 		for j := 0; j < mldsa.K44; j++ {
-			s2Total[j] = mldsa.RingAdd(s2Total[j], s2[j])
+			s2Total[j] = mldsa.PolyAdd(s2Total[j], s2[j])
 		}
 
 		// Distribute the share to every party whose bit is in mask.
@@ -111,9 +111,9 @@ func TrustedDealerKeygen44(seed [32]byte, params *ThresholdParams44) (*PublicKey
 	for i := 0; i < mldsa.K44; i++ {
 		var acc mldsa.NttElement
 		for j := 0; j < mldsa.L44; j++ {
-			acc = mldsa.NttAdd(acc, mldsa.NttMul(A[i*mldsa.L44+j], s1hTotal[j]))
+			acc = mldsa.PolyAdd(acc, mldsa.NttMul(A[i*mldsa.L44+j], s1hTotal[j]))
 		}
-		tPoly := mldsa.RingAdd(mldsa.InvNTT(acc), s2Total[i])
+		tPoly := mldsa.PolyAdd(mldsa.InvNTT(acc), s2Total[i])
 		for j := 0; j < mldsa.N; j++ {
 			hi, _ := mldsa.Power2Round(tPoly[j])
 			t1[i][j] = hi
@@ -121,12 +121,12 @@ func TrustedDealerKeygen44(seed [32]byte, params *ThresholdParams44) (*PublicKey
 	}
 
 	// Pack the public key into its canonical FIPS 204 form.
-	pkBytes := make([]byte, 32+mldsa.K44*mldsa.EncodingSizeT1)
+	pkBytes := make([]byte, 32+mldsa.K44*mldsa.EncodingSize10)
 	copy(pkBytes[:32], rho[:])
 	off := 32
 	for i := 0; i < mldsa.K44; i++ {
 		copy(pkBytes[off:], mldsa.PackT1(t1[i]))
-		off += mldsa.EncodingSizeT1
+		off += mldsa.EncodingSize10
 	}
 
 	pk, err := mldsa.NewPublicKey44(pkBytes)

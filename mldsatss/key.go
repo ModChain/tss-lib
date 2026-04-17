@@ -149,10 +149,10 @@ func (k *Key44) recoverShare(act uint8, params *ThresholdParams44) (s1h [mldsa.L
 			return s1h, s2h, errors.New("mldsatss: missing share in sharing pattern")
 		}
 		for j := 0; j < mldsa.L44; j++ {
-			s1h[j] = mldsa.NttAdd(s1h[j], share.S1h[j])
+			s1h[j] = mldsa.PolyAdd(s1h[j], share.S1h[j])
 		}
 		for j := 0; j < mldsa.K44; j++ {
-			s2h[j] = mldsa.NttAdd(s2h[j], share.S2h[j])
+			s2h[j] = mldsa.PolyAdd(s2h[j], share.S2h[j])
 		}
 	}
 	return s1h, s2h, nil

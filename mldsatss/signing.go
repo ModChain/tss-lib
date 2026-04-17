@@ -77,13 +77,13 @@ func (p *Parameters) msgType(base string) string {
 // via Err; callers can retry by creating a new Signing44 with a fresh
 // attempt id.
 type Signing44 struct {
-	ctx     context.Context
-	params  *Parameters
-	key     *Key44
-	msg     []byte
-	msgCtx  []byte
-	myRank  uint8 // position of this party within the signing committee
-	act     uint8 // bitmask over Key44.Ids of the signing committee
+	ctx    context.Context
+	params *Parameters
+	key    *Key44
+	msg    []byte
+	msgCtx []byte
+	myRank uint8 // position of this party within the signing committee
+	act    uint8 // bitmask over Key44.Ids of the signing committee
 
 	// Round-1 state kept across rounds:
 	wVecs [][mldsa.K44]mldsa.RingElement // (K tries) × K44 polys — raw w_i = A r_i + e_i
@@ -214,9 +214,9 @@ func (s *Signing44) round1() error {
 		for i := 0; i < mldsa.K44; i++ {
 			var acc mldsa.NttElement
 			for j := 0; j < mldsa.L44; j++ {
-				acc = mldsa.NttAdd(acc, mldsa.NttMul(A[i*mldsa.L44+j], rh[j]))
+				acc = mldsa.PolyAdd(acc, mldsa.NttMul(A[i*mldsa.L44+j], rh[j]))
 			}
-			s.wVecs[tryIdx][i] = mldsa.RingAdd(mldsa.InvNTT(acc), eK[i])
+			s.wVecs[tryIdx][i] = mldsa.PolyAdd(mldsa.InvNTT(acc), eK[i])
 		}
 	}
 
@@ -373,7 +373,7 @@ func (s *Signing44) round3() {
 		for tryIdx := 0; tryIdx < int(params.K); tryIdx++ {
 			for i := 0; i < mldsa.K44; i++ {
 				poly := mldsa.UnpackPolyQ(s.r2wbufs[slot][off : off+mldsa.PackPolyQSize])
-				wfinal[tryIdx][i] = mldsa.RingAdd(wfinal[tryIdx][i], poly)
+				wfinal[tryIdx][i] = mldsa.PolyAdd(wfinal[tryIdx][i], poly)
 				off += mldsa.PackPolyQSize
 			}
 		}
@@ -420,12 +420,12 @@ func (s *Signing44) round3() {
 	}
 
 	// Pack responses (K × L44 × EncodingSizeZ17 bytes).
-	respBuf := make([]byte, int(params.K)*mldsa.L44*mldsa.EncodingSizeZ17)
+	respBuf := make([]byte, int(params.K)*mldsa.L44*mldsa.EncodingSize18)
 	off := 0
 	for tryIdx := 0; tryIdx < int(params.K); tryIdx++ {
 		for j := 0; j < mldsa.L44; j++ {
 			copy(respBuf[off:], mldsa.PackZ17(resps[tryIdx][j]))
-			off += mldsa.EncodingSizeZ17
+			off += mldsa.EncodingSize18
 		}
 	}
 	s.r3resps[s.myRank] = respBuf
@@ -450,7 +450,7 @@ func (s *Signing44) onR3(from []*tss.PartyID, msgs []*signRound3msg44) {
 	if s.bail() {
 		return
 	}
-	expectedRespLen := int(s.params.thParams.K) * mldsa.L44 * mldsa.EncodingSizeZ17
+	expectedRespLen := int(s.params.thParams.K) * mldsa.L44 * mldsa.EncodingSize18
 	for i, pid := range from {
 		slot := s.committeeSlot(pid)
 		if slot < 0 {
@@ -480,9 +480,9 @@ func (s *Signing44) combine() {
 		off := 0
 		for tryIdx := 0; tryIdx < int(params.K); tryIdx++ {
 			for j := 0; j < mldsa.L44; j++ {
-				poly := mldsa.UnpackZ17(s.r3resps[slot][off : off+mldsa.EncodingSizeZ17])
-				zfinal[tryIdx][j] = mldsa.RingAdd(zfinal[tryIdx][j], poly)
-				off += mldsa.EncodingSizeZ17
+				poly := mldsa.UnpackZ17(s.r3resps[slot][off : off+mldsa.EncodingSize18])
+				zfinal[tryIdx][j] = mldsa.PolyAdd(zfinal[tryIdx][j], poly)
+				off += mldsa.EncodingSize18
 			}
 		}
 	}
@@ -494,7 +494,7 @@ func (s *Signing44) combine() {
 		for tryIdx := 0; tryIdx < int(params.K); tryIdx++ {
 			for i := 0; i < mldsa.K44; i++ {
 				poly := mldsa.UnpackPolyQ(s.r2wbufs[slot][off : off+mldsa.PackPolyQSize])
-				wfinal[tryIdx][i] = mldsa.RingAdd(wfinal[tryIdx][i], poly)
+				wfinal[tryIdx][i] = mldsa.PolyAdd(wfinal[tryIdx][i], poly)
 				off += mldsa.PackPolyQSize
 			}
 		}
@@ -519,10 +519,10 @@ func (s *Signing44) combine() {
 	t1 := s.key.T1
 
 	// For each try, attempt to produce a FIPS 204 signature.
-	sigBuf := make([]byte, mldsa.Lambda44/4+mldsa.L44*mldsa.EncodingSizeZ17+mldsa.Omega44+mldsa.K44)
+	sigBuf := make([]byte, mldsa.Lambda128/4+mldsa.L44*mldsa.EncodingSize18+mldsa.Omega80+mldsa.K44)
 	for tryIdx := 0; tryIdx < int(params.K); tryIdx++ {
 		// ‖z‖_∞ < γ1 − β?
-		if !zWithinBound(&zfinal[tryIdx], mldsa.Gamma1_44-mldsa.Beta44) {
+		if !zWithinBound(&zfinal[tryIdx], mldsa.Gamma1Pow17-mldsa.Beta44) {
 			continue
 		}
 
@@ -543,7 +543,7 @@ func (s *Signing44) combine() {
 		for i := 0; i < mldsa.K44; i++ {
 			var acc mldsa.NttElement
 			for j := 0; j < mldsa.L44; j++ {
-				acc = mldsa.NttAdd(acc, mldsa.NttMul(A[i*mldsa.L44+j], zHat[j]))
+				acc = mldsa.PolyAdd(acc, mldsa.NttMul(A[i*mldsa.L44+j], zHat[j]))
 			}
 			Az[i] = acc
 		}
@@ -558,16 +558,16 @@ func (s *Signing44) combine() {
 			}
 			t1Hat := mldsa.NTT(t1Scaled)
 			ct1 := mldsa.NttMul(cHat, t1Hat)
-			diff := mldsa.NttSub(Az[i], ct1)
+			diff := mldsa.PolySub(Az[i], ct1)
 			Az2dct1[i] = mldsa.InvNTT(diff)
 		}
 
 		// f = (Az − 2^d·c·t1) − wfinal  — should have |·|_∞ < γ₂ if valid.
 		var f [mldsa.K44]mldsa.RingElement
 		for i := 0; i < mldsa.K44; i++ {
-			f[i] = mldsa.RingSub(Az2dct1[i], wfinal[tryIdx][i])
+			f[i] = mldsa.PolySub(Az2dct1[i], wfinal[tryIdx][i])
 		}
-		if mldsa.VectorInfinityNorm(f[:]) >= mldsa.Gamma2_44 {
+		if mldsa.VectorInfinityNorm(f[:]) >= mldsa.Gamma2QMinus1Div88 {
 			continue
 		}
 
@@ -592,16 +592,16 @@ func (s *Signing44) combine() {
 				hints[i][j] = mldsa.FieldElement(makeHintLowBits44(z0, uint32(w1[i][j])))
 			}
 		}
-		if mldsa.CountOnes(hints[:]) > mldsa.Omega44 {
+		if mldsa.CountOnes(hints[:]) > mldsa.Omega80 {
 			continue
 		}
 
 		// Assemble (c~, z, hint).
-		copy(sigBuf[:mldsa.Lambda44/4], cTilde[:])
-		off := mldsa.Lambda44 / 4
+		copy(sigBuf[:mldsa.Lambda128/4], cTilde[:])
+		off := mldsa.Lambda128 / 4
 		for j := 0; j < mldsa.L44; j++ {
 			copy(sigBuf[off:], mldsa.PackZ17(zfinal[tryIdx][j]))
-			off += mldsa.EncodingSizeZ17
+			off += mldsa.EncodingSize18
 		}
 		copy(sigBuf[off:], mldsa.PackHint44(hints[:]))
 
@@ -628,13 +628,13 @@ func highBitsVecK44(w *[mldsa.K44]mldsa.RingElement) [mldsa.K44]mldsa.RingElemen
 }
 
 // computeCTilde44 computes c~ = SHAKE256(μ ‖ PackW1(w₁)) → λ/4 bytes.
-func computeCTilde44(mu []byte, w1 *[mldsa.K44]mldsa.RingElement) [mldsa.Lambda44 / 4]byte {
+func computeCTilde44(mu []byte, w1 *[mldsa.K44]mldsa.RingElement) [mldsa.Lambda128 / 4]byte {
 	h := sha3.NewSHAKE256()
 	h.Write(mu)
 	for i := 0; i < mldsa.K44; i++ {
 		h.Write(mldsa.PackW1_44(w1[i]))
 	}
-	var out [mldsa.Lambda44 / 4]byte
+	var out [mldsa.Lambda128 / 4]byte
 	h.Read(out[:])
 	return out
 }
@@ -657,7 +657,7 @@ func zWithinBound(z *[mldsa.L44]mldsa.RingElement, bound uint32) bool {
 // FIPS 204's full-value MakeHint(z, r). The produced hint is valid input
 // for FIPS 204 UseHint.
 func makeHintLowBits44(z0, r1 uint32) uint32 {
-	const g = mldsa.Gamma2_44
+	const g = mldsa.Gamma2QMinus1Div88
 	if z0 <= g || z0 > mldsa.Q-g || (z0 == mldsa.Q-g && r1 == 0) {
 		return 0
 	}

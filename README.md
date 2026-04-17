@@ -122,7 +122,7 @@ newKey := <-rs.Done
 
 The `mldsatss` package implements the ML-DSA-44 variant of "Threshold Signatures Reloaded" [2]. The protocol is a 3-round exchange (commit hash → reveal w → responses) with a reject-and-retry outer loop; the final output is a standard FIPS 204 signature.
 
-⚠️ **Research-grade prototype.** The scheme is not standardized, has not received independent cryptanalytic review, and is **not** suitable for production. The `SampleHyperball` primitive uses `math/float64` and is not side-channel resistant. Track NIST IR 8214C for standardization progress before deploying anything based on this package.
+⚠️ **Research-grade prototype.** The scheme is not standardized and has not received independent cryptanalytic review, so it is **not** suitable for production. Track NIST IR 8214C for standardization progress before deploying anything based on this package.
 
 Current scope:
 - ML-DSA-44 only (ML-DSA-65 / ML-DSA-87 not yet plumbed).

@@ -23,5 +23,5 @@ type signRound2msg44 struct {
 
 // signRound3msg44 is the per-party response — packed z_i for i ∈ [0, K).
 type signRound3msg44 struct {
-	Resp []byte `json:"resp"` // ThParams.K × L44 × mldsa.EncodingSizeZ17 bytes
+	Resp []byte `json:"resp"` // ThParams.K × L44 × mldsa.EncodingSize18 bytes
 }

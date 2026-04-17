@@ -128,7 +128,6 @@ func (rs *Resharing) getSSID() ([]byte, error) {
 	return ssid, nil
 }
 
-
 // prepareForSigning computes the Lagrange coefficient wi for the old committee member.
 func (rs *Resharing) prepareForSigning(subsetKey *Key) (*big.Int, error) {
 	ec := rs.params.EC()
