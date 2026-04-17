@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/KarpelesLab/base58 v1.1.1
 	github.com/KarpelesLab/edwards25519 v1.1.7
+	github.com/KarpelesLab/mldsa v0.1.2
 	github.com/KarpelesLab/secp256k1 v0.2.8
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ipfs/go-log v1.0.5
