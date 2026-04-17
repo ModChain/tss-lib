@@ -21,6 +21,8 @@ This library includes three protocols:
 * Signing for using the secret shares to generate a signature ("signing").
 * Dynamic Groups to change the group of participants while keeping the secret ("resharing").
 
+It also ships an **experimental** post-quantum threshold signer in the `mldsatss` package, implementing the ML-DSA-44 (FIPS 204) variant of "Threshold Signatures Reloaded" [2]. The output signatures are byte-identical to stock FIPS 204 and verify with any standard ML-DSA verifier.
+
 ⚠️ Do not miss [these important notes](#how-to-use-this-securely) on implementing this library securely
 
 ## Rationale
@@ -116,6 +118,54 @@ rs, err := eddsatss.NewResharing(ctx, resharingParams, oldKey)
 newKey := <-rs.Done
 ```
 
+### Post-Quantum Threshold ML-DSA (experimental)
+
+The `mldsatss` package implements the ML-DSA-44 variant of "Threshold Signatures Reloaded" [2]. The protocol is a 3-round exchange (commit hash → reveal w → responses) with a reject-and-retry outer loop; the final output is a standard FIPS 204 signature.
+
+⚠️ **Research-grade prototype.** The scheme is not standardized, has not received independent cryptanalytic review, and is **not** suitable for production. The `SampleHyperball` primitive uses `math/float64` and is not side-channel resistant. Track NIST IR 8214C for standardization progress before deploying anything based on this package.
+
+Current scope:
+- ML-DSA-44 only (ML-DSA-65 / ML-DSA-87 not yet plumbed).
+- **Trusted-dealer** keygen from a 32-byte seed, matching the paper's reference. No DKG yet — distributed key generation for this scheme is an open research question.
+- Signing committees with `2 ≤ t ≤ n ≤ 6`. The paper's hardcoded parameter table (K, r, r′, ν) and honest-signer sharing patterns are copied verbatim into [`mldsatss/params.go`](mldsatss/params.go).
+- No resharing, no identifiable aborts.
+
+Trusted-dealer keygen:
+
+```go
+import "github.com/KarpelesLab/tss-lib/v2/mldsatss"
+
+// Threshold parameters for (t, n).
+tParams, err := mldsatss.GetThresholdParams44(t, n)
+
+// Trusted dealer derives pk and N per-party Keys deterministically from seed.
+pk, keys, err := mldsatss.TrustedDealerKeygen44(seed, tParams)
+```
+
+Signing (per party). Each signer constructs its own `mldsatss.Signing44`; messages are routed through the same `tss.MessageBroker` abstraction as ecdsatss/eddsatss:
+
+```go
+// Build a sorted committee of T signers and the list of their Key44.Id values
+// in that sorted order, then wire a broker for each party.
+p2pCtx := tss.NewPeerContext(signers)
+params, err := mldsatss.NewParameters(myPartyID, p2pCtx, tParams, keyIds, broker)
+
+// Kick off one 3-round attempt.
+s, err := mldsatss.NewSigning44(ctx, params, myKey, msg, msgCtx)
+select {
+case result := <-s.Done:
+    // result.Signature is a standard FIPS 204 ML-DSA-44 signature.
+case err := <-s.Err:
+    // ErrAllTriesRejected: every try in this 3-round exchange failed the
+    // rejection bound. Retry with params.SetAttemptID(nextID) and a fresh
+    // Signing44 until one succeeds. For (t=2, n=2) with K=2, expect a
+    // handful of retries on average; for larger (t, n) the paper tunes K
+    // so that typical success is 1–3 attempts.
+}
+```
+
+After success, `pk.Verify(result.Signature, msg, msgCtx)` (on the same `*mldsa.PublicKey44` returned by the trusted dealer) will return true.
+
 ## Migration from Legacy API (v2.1 and earlier)
 
 The `ecdsa/keygen`, `ecdsa/signing`, `ecdsa/resharing`, `eddsa/keygen`, `eddsa/signing`, and `eddsa/resharing` packages are now **deprecated**. They still work but will not receive new features.
@@ -207,4 +257,6 @@ A full review of this library was carried out by Kudelski Security and their fin
 
 ## References
 \[1\] https://eprint.iacr.org/2019/114.pdf
+
+\[2\] Borin, Celi, del Pino, Espitau, Niot, Prest. "Threshold Signatures Reloaded: ML-DSA and Enhanced Raccoon with Identifiable Aborts." ePrint 2025/1166 — https://eprint.iacr.org/2025/1166
 
