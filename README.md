@@ -118,6 +118,41 @@ rs, err := eddsatss.NewResharing(ctx, resharingParams, oldKey)
 newKey := <-rs.Done
 ```
 
+### Importing an existing key
+
+Both `ecdsatss` and `eddsatss` provide an `ImportKey` helper that wraps a plain,
+non-TSS private key as a trivial 1-of-1 share. The resulting `*Key` can be fed
+into `NewResharing` as the sole old-committee input, so an existing key can be
+split into a real t-of-n threshold committee without regenerating the public
+key.
+
+⚠️ **This defeats one of TSS's core properties.** A correct DKG guarantees that
+the full private key never exists on any single machine. `ImportKey` violates
+that by construction — at the moment of import, one party holds the entire
+scalar. Only use it to migrate a pre-existing (legacy, single-signer) key into
+a threshold setup; for brand-new keys, use `NewKeygen` instead.
+
+```go
+// ECDSA: priv is a *ecdsa.PrivateKey you already hold.
+importer := tss.NewPartyID("importer", "importer", uniqueKey)
+oldKey, err := ecdsatss.ImportKey(priv, importer)
+
+// Run resharing from a 1-of-1 "old committee" into a real t-of-n "new committee".
+oldCtx := tss.NewPeerContext(tss.SortPartyIDs(tss.UnSortedPartyIDs{importer}))
+newCtx := tss.NewPeerContext(newParties)
+params := tss.NewReSharingParameters(
+    tss.S256(), oldCtx, newCtx, importer,
+    /*oldPartyCount*/ 1, /*oldThreshold*/ 0,
+    /*newPartyCount*/ n, /*newThreshold*/ t,
+)
+rs, err := ecdsatss.NewResharing(ctx, params, oldKey)
+// The importer's <-rs.Done delivers a key with Xi zeroed; each new party
+// receives its share. All new shares verify under priv.PublicKey.
+```
+
+`eddsatss.ImportKey(priv *big.Int, partyID *tss.PartyID)` works the same way
+for Ed25519 scalars on `tss.Edwards()`.
+
 ### Post-Quantum Threshold ML-DSA (experimental)
 
 The `mldsatss` package implements the ML-DSA-44 variant of "Threshold Signatures Reloaded" [2]. The protocol is a 3-round exchange (commit hash → reveal w → responses) with a reject-and-retry outer loop; the final output is a standard FIPS 204 signature.
